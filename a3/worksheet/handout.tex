@@ -1,0 +1,131 @@
+\documentclass[10pt,twocolumn]{article}
+\usepackage[margin=0.75in]{geometry}                % See geometry.pdf to learn the layout options. There are lots.
+\geometry{letterpaper}                   % ... or a4paper or a5paper or ... 
+%\geometry{landscape}                % Activate for for rotated page geometry
+%\usepackage[parfill]{parskip}    % Activate to begin paragraphs with an empty line rather than an indent
+\setlength{\columnsep}{1cm}
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{epstopdf}
+\usepackage{fullpage}
+\usepackage[usenames]{color}
+\usepackage{titlesec}
+\usepackage{hyperref}
+\usepackage{framed}
+
+\definecolor{light-gray}{gray}{0.45}
+\titleformat{\section}
+{\color{black}\normalfont\Large\bfseries}
+{\color{black}\thesection}{1em}{}
+
+\titleformat{\subsection}
+{\color{light-gray}\normalfont\large\bfseries}
+{\color{light-gray}\thesubsection}{1em}{}
+
+\DeclareGraphicsRule{.tif}{png}{.png}{`convert #1 `dirname #1`/`basename #1 .tif`.png}
+
+\title{\Huge{\bf Algorithm 3: Sceneview}}
+\author{Comp175: Introduction to Computer Graphics -- Spring 2014}
+\date{Algorithm due:  {\bf Monday March 3th} at 11:59pm\\
+Project due:  {\bf Monday March 10th} at 11:59pm}                            
+
+
+\begin{document}
+\maketitle
+%\section{}
+%\subsection{}
+
+\begin{verbatim}
+Your Names: _____________________________
+
+            _____________________________
+
+Your CS Logins: _________________________
+
+                _________________________
+\end{verbatim}
+
+
+\section{Instructions}
+Complete this assignment only with your teammate. You may use a
+calculator or computer algebra system. All your answers should be given in simplest form.
+When a numerical answer is required, provide a reduced fraction (i.e. 1/3) or at least three
+decimal places (i.e. 0.333). Show all work; write your answers on this sheet. This algorithm handout is worth 3\% of your final grade for the class.
+
+\section{OpenGL Commands}
+\begin{framed}
+\noindent {\bf [${{1}\over{2}}$ point each]} Suppose you want to apply a transformation matrix to some vertices. In what order should you use the following five OpenGL commands?
+\begin{verbatim}
+     ____ glEnd()
+     ____ glMatrixMode(GL_MODELVIEW)
+     ____ glBegin()
+     ____ glLoadMatrix()
+     ____ glVertex4fv()
+\end{verbatim}
+\end{framed}
+
+
+\begin{framed}
+\noindent {\bf [$1 {{1}\over{2}}$ points]} Suppose your program contained a block of code which sent vertices to OpenGL, delimited by {\tt glBegin()} and {\tt glEnd()}. What would be the effect of a call to {\tt glLoadMatrix()} within this block?
+\vspace{10em}
+\end{framed}
+
+\section{Scenefiles}
+Consider the following excerpt from a scenefile.
+\begin{verbatim}<transblock>     <translate x="0" y=".5" z="0"/>     <scale x=".05" y="1.0" z=".05"/>     <rotate x="1" y="0" z="0" angle="45"/>
+     <object type="primitive" name="cylinder">          <diffuse r="1" g="1" b="1"/> 
+     </object></transblock>
+\end{verbatim}
+
+\begin{framed}
+\noindent {\bf [$1 {{1}\over{2}}$ points]}  To transform a point on the cylinder $C$ into the desired cylinder $C'$, in which order would you multiply the three transformations: translate ($T$), rotate ($R$), and scale ($S$) to achieve the desired effect?\\
+\begin{verbatim}
+
+
+ C' = ___________________________ * C
+ 
+\end{verbatim} 
+\end{framed}
+
+\noindent In a previous question you described how to compose transformations within a single transformation block (trans block). When coding {\tt Sceneview}, you will also have to compose transformations whenever there is an object tree block contained within a trans block. Consider the following contrived excerpt from a scenefile:
+\begin{verbatim}
+<transblock>  <rotate x="0" y="1" z="0" angle="60"/> 
+  <scale x=".5" y=".5" z=".5"/>  <object type="tree">    <transblock>      <translate x="0" y="2" z="0"/>
+      <scale x="1" y=".5" z="1"/>      <object type="primitive" name="sphere">        <diffuse r="1" g="1" b="0"/> 
+      </object>
+    </transblock> 
+  </object></transblock>
+\end{verbatim}
+
+\begin{framed}
+\noindent {\bf [$1 {{1}\over{2}}$ points]}  Suppose you composed the two transformations in the outer trans block, calling the result CTM1, and composed the transformations in the inner trans block, calling the result CTM2. Show the order in which you must multiply these matrices to obtain a single composite matrix with the desired effect on the sphere.
+\end{framed}
+
+\vspace{20em}
+
+\begin{framed}
+\vspace{15em}
+\end{framed}
+
+
+\section{Parse Tree}
+Being sure of the order in which matrices must be multiplied puts you well on your way to completing {\tt Sceneview}. The other major hurdle is deciding how you will traverse the parse tree provided by {\tt SceneParser}.\begin{framed}
+\noindent {\bf [1 point]} In your most efficient program design, when and how many times should you traverse the original parse tree?
+\vspace{10em}
+\end{framed}
+\begin{framed}
+\noindent {\bf [1 point]} Flattening the parse tree makes it quicker and easier to traverse when drawing the scene. What type of data structure will you use for this flattened tree?
+\vspace{10em}
+\end{framed}
+\begin{framed}
+\noindent {\bf [1 point]} What information will you store at each of the nodes in the flattened tree? Please give valid types and descriptions of any types you are defining yourself.
+\vspace{10em}
+\end{framed}
+
+\section{How to Submit}
+
+Hand in a PDF version of your solutions using the following command:
+\begin{center}
+ {\tt provide comp175 a3-alg}
+ \end{center}
+\end{document}  
