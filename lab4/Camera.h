@@ -36,7 +36,7 @@ class Camera {
 
         double GetFilmPlaneDepth();
         double GetScreenWidthRatio();
-    private:
+    protected:
         int screen_width, screen_height;
         double near_plane, far_plane;
         double view_angle;

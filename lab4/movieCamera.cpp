@@ -26,6 +26,7 @@ float movieCamera::rotate[] = 	{ 1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1 };
 float movieCamera::scale[] = 	{ 1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1 };
 float movieCamera::rotate_around = 0;
 
+enum dimensions {X, Y, Z};
 
 	/*  ===============================================
 	      Desc: Default Constructor
@@ -33,7 +34,8 @@ float movieCamera::rotate_around = 0;
 	      Postcondition:
     	=============================================== */ 
 movieCamera::movieCamera(){
-	}
+    up_vector = Vector(0, 1, 0);
+}
 
 	/*  ===============================================
 	      Desc: Default Destructor
@@ -53,7 +55,22 @@ movieCamera::~movieCamera(){
       Postcondition:
 	=============================================== */ 
 void movieCamera::closeUp(float your_x, float your_y, float your_z, float near, float far){
-     
+    Point target(your_x, your_y, your_z);
+    Vector translate_camera(0, 3, 3);
+    Point eyepoint = target + translate_camera;
+    Vector look = target - eyepoint;
+    Orient(eyepoint, look, up_vector); 
+
+    /*
+    SetNearPlane(near);
+    SetFarPlane(far);
+    Matrix projection = GetProjectionMatrix();
+    
+    glMultMatrixd(projection.unpack());
+    */
+
+    Matrix modelview = GetModelViewMatrix();
+    glMultMatrixd(modelview.unpack());
 }
 
 /*
@@ -77,7 +94,7 @@ void movieCamera::wideAngle(float _fov){
   Postcondition:
 =============================================== */ 
 void movieCamera::orthogonal(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble nearVal, GLdouble farVal){
-
+    
 }
 
 /*  ===============================================
