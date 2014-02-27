@@ -10,7 +10,7 @@ MCFRAME = -framework OpenGL -framework GLUT -framework GLUI
 
 TARGET = run
 
-CFILES = Assignment2.cpp Camera.cpp Cube.cpp Cylinder.cpp Cone.cpp Sphere.cpp Face.cpp Shape.cpp Round.cpp Special.cpp
+CFILES = Assignment3.cpp SceneParser.cpp tinyxml.cpp tinyxmlerror.cpp tinyxmlparser.cpp Camera.cpp Cube.cpp Cylinder.cpp Cone.cpp Sphere.cpp Face.cpp Shape.cpp Round.cpp Special.cpp
 
 all: louis
 
@@ -22,7 +22,7 @@ v: $(CFILES)
 
 q: louis
 
-marcella: $(CFILES)
+jayme: $(CFILES)
 	$(CC) $(MCFLAGS) $(CFILES) -I $(MCLIBS) $(MCFRAME) -o $(TARGET)
 
 clean:

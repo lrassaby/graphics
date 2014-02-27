@@ -205,3 +205,5 @@ double Camera::GetFilmPlaneDepth() {
 double Camera::GetScreenWidthRatio() {
 	return (double) screen_width / (double) screen_height;
 }
+
+void Camera::Reset() {}
