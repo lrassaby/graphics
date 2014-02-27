@@ -1,0 +1,1 @@
+The .ply files were originally .obj and .3ds models downloaded from TF3DM.com that were royalty free to use.  The .ply models were then generated from Blender from their respective formats.
