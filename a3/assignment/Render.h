@@ -12,10 +12,10 @@ struct RenderNode {
 
 class Render {
     public:
-        void flatten(SceneNode *root);
+        void flatten(SceneNode *root, Matrix transformation);
         void render();
     private:
-        std::vector<struct RenderNode> nodes;
+        std::vector<RenderNode> nodes;
 };
 
 #endif
