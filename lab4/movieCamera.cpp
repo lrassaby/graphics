@@ -61,14 +61,6 @@ void movieCamera::closeUp(float your_x, float your_y, float your_z, float near, 
     Vector look = target - eyepoint;
     Orient(eyepoint, look, up_vector); 
 
-    /*
-    SetNearPlane(near);
-    SetFarPlane(far);
-    Matrix projection = GetProjectionMatrix();
-    
-    glMultMatrixd(projection.unpack());
-    */
-
     Matrix modelview = GetModelViewMatrix();
     glMultMatrixd(modelview.unpack());
 }
@@ -94,7 +86,6 @@ void movieCamera::wideAngle(float _fov){
   Postcondition:
 =============================================== */ 
 void movieCamera::orthogonal(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble nearVal, GLdouble farVal){
-    
 }
 
 /*  ===============================================
@@ -115,6 +106,15 @@ void movieCamera::perspective(GLdouble fovy, GLdouble aspect, GLdouble zNear, GL
 void movieCamera::follow(float your_x, float your_y, float your_z,
 						float target_x, float target_y, float target_z,
 						float up_x, float up_y, float up_z){
+    Point eyepoint(your_x, your_y, your_z);
+    Point target(target_x, target_y, target_z);
+
+    Vector look = eyepoint - target;
+
+    Orient(eyepoint, look, up_vector); 
+
+    Matrix modelview = GetModelViewMatrix();
+    glMultMatrixd(modelview.unpack());
 }
 /*  ===============================================
       Desc: Spin around a point in space at a distance(i.e. "radius")
