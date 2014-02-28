@@ -6,8 +6,7 @@
 
 struct RenderNode {
     Matrix composite;
-    SceneColor color;
-    std::vector<ScenePrimitive*> objects;
+    std::vector<ScenePrimitive*> primitives;
 };
 
 class Render {

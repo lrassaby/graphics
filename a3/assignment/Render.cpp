@@ -3,24 +3,28 @@
 
 enum dimensions {X, Y, Z};
 
+Matrix buildTransformation(SceneTransformation *trans);
+Matrix CalcRotate(Vector axis, double gamma);
+
 void Render::flatten(SceneNode *root, Matrix transformation) 
 {
     RenderNode node;
     for (int i = 0; i < root->transformations.size(); i++) {
-        //transformation = root->transformations[i];
-
+        transformation = transformation * buildTransformation(root->transformations[i]);
     }
+    node.composite = transformation;
+    node.primitives = root->primitives;
 
-    //nodes.push_back();
+    nodes.push_back(node);
 
     for (int i = 0; i < root->children.size(); i++) {
         flatten(root->children[i], transformation);
     }
 }
 
-void Render::render() {}
-
-/* private */
+void Render::render() 
+{
+}
 
 Matrix buildTransformation(SceneTransformation *trans)
 {
@@ -34,7 +38,7 @@ Matrix buildTransformation(SceneTransformation *trans)
                        0, 0, 0, 1);
             break;
         case TRANSFORMATION_ROTATE:
-            /* TODO: This. */
+            return_matrix = CalcRotate(trans->rotate, trans->angle);
             break;
         case TRANSFORMATION_SCALE:
             return_matrix =
@@ -49,3 +53,11 @@ Matrix buildTransformation(SceneTransformation *trans)
     }
     return return_matrix;
 }
+
+/* rotations around origin */
+Matrix CalcRotate(Vector axis, double gamma) {
+    double theta = atan2(axis[Z], axis[X]);
+    double phi = -atan2(axis[Y], sqrt(axis[X] * axis[X] + axis[Z] * axis[Z]));
+    return rotX_mat(gamma) * rotY_mat(theta) * rotZ_mat(phi);
+}
+

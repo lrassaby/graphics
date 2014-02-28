@@ -10,7 +10,7 @@ MCFRAME = -framework OpenGL -framework GLUT -framework GLUI
 
 TARGET = run
 
-CFILES = Assignment3.cpp SceneParser.cpp tinyxml.cpp tinyxmlerror.cpp tinyxmlparser.cpp Camera.cpp Cube.cpp Cylinder.cpp Cone.cpp Sphere.cpp Face.cpp Shape.cpp Round.cpp Special.cpp
+CFILES = Assignment3.cpp SceneParser.cpp tinyxml.cpp tinyxmlerror.cpp tinyxmlparser.cpp Camera.cpp Cube.cpp Cylinder.cpp Cone.cpp Sphere.cpp Face.cpp Shape.cpp Round.cpp Special.cpp Render.cpp
 
 all: louis
 

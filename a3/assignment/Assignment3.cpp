@@ -261,7 +261,8 @@ void myGlutDisplay(void)
 	}
     
 	SceneNode *root = parser->getRootNode();
-	Matrix compositeMatrix;
+	Render renderer;
+	renderer.flatten(root, Matrix());
 
 	//drawing the axes
 	glEnable(GL_COLOR_MATERIAL);
