@@ -243,7 +243,10 @@ void myGlutDisplay(void)
 	Matrix projection = camera->GetProjectionMatrix();
 	glLoadMatrixd(projection.unpack());
 
-	camera->Orient(Point(eyeX, eyeY, eyeZ), Vector(lookX, lookY, lookZ), Vector(0, 1, 0));
+    Point eye = Point(eyeX, eyeY, eyeZ);
+    Vector look = Vector(lookX, lookY, lookZ);
+    Vector up = Vector(0, 1, 0);
+	camera->Orient(eye, look, up);
 	camera->RotateV(camRotV);
 	camera->RotateU(camRotU);
 	camera->RotateW(camRotW);

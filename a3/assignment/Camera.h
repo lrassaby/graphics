@@ -36,6 +36,7 @@ class Camera {
 
         double GetFilmPlaneDepth();
         double GetScreenWidthRatio();
+        void Reset();
     private:
         int screen_width, screen_height;
         double near_plane, far_plane;
