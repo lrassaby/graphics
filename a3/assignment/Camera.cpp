@@ -15,11 +15,7 @@ double DegreetoRadian(double degree)
 
 
 Camera::Camera() {
-    screen_width = 0;
-    screen_height = 0;
-    near_plane = 0.001;
-    far_plane = 0;
-    view_angle = 0;
+    Reset();
 }
 
 Camera::~Camera() {
@@ -206,4 +202,14 @@ double Camera::GetScreenWidthRatio() {
 	return (double) screen_width / (double) screen_height;
 }
 
-void Camera::Reset() {}
+void Camera::Reset() 
+{   
+    screen_width = 500;
+    screen_height = 500;
+    near_plane = 0.001;
+    far_plane = 30;
+    view_angle = 45;
+    u_vector = Vector(1, 0, 0);
+    v_vector = Vector(0, 1, 0);
+    w_vector = Vector(0, 0, 1);
+}

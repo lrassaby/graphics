@@ -4,6 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <vector>
 #include <GL/glui.h>
 #include "Shape.h"
 #include "Cube.h"
@@ -12,6 +13,7 @@
 #include "Sphere.h"
 #include "SceneParser.h"
 #include "Camera.h"
+#include "Render.h"
 
 using namespace std;
 
@@ -34,7 +36,7 @@ float lookZ = -2;
 
 /** These are GLUI control panel objects ***/
 int  main_window;
-string filenamePath = "data\\general\\test.xml";
+string filenamePath = "data/test/ball.xml";
 GLUI_EditText* filenameTextField = NULL;
 
 
@@ -257,8 +259,8 @@ void myGlutDisplay(void)
 	for (int i = 0; i < NUM_OPENGL_LIGHTS; i++) {
 		glDisable(GL_LIGHT0 + i);
 	}
-
-	SceneNode* root = parser->getRootNode();
+    
+	SceneNode *root = parser->getRootNode();
 	Matrix compositeMatrix;
 
 	//drawing the axes
@@ -411,6 +413,3 @@ int main(int argc, char* argv[])
 
 	return EXIT_SUCCESS;
 }
-
-
-
