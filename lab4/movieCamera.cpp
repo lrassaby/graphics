@@ -106,15 +106,11 @@ void movieCamera::perspective(GLdouble fovy, GLdouble aspect, GLdouble zNear, GL
 void movieCamera::follow(float your_x, float your_y, float your_z,
 						float target_x, float target_y, float target_z,
 						float up_x, float up_y, float up_z){
-    Point eyepoint(your_x, your_y, your_z);
-    Point target(target_x, target_y, target_z);
 
-    Vector look = eyepoint - target;
-
-    Orient(eyepoint, look, up_vector); 
-
-    Matrix modelview = GetModelViewMatrix();
-    glMultMatrixd(modelview.unpack());
+    Vector axis(0, 5, 0);
+    axis = normalize(axis);
+    glRotatef(100, axis[0], axis[1], axis[2]);
+    glTranslatef(-your_x + 1, -your_y - 3, -your_z + 1);
 }
 /*  ===============================================
       Desc: Spin around a point in space at a distance(i.e. "radius")
@@ -123,8 +119,9 @@ void movieCamera::follow(float your_x, float your_y, float your_z,
 	=============================================== */ 
 void movieCamera::spinAroundPoint(float your_x, float your_y, float your_z, float distance){
 	rotate_around += 1;
+    
+    if(rotate_around>360){ rotate_around = 0; }
+    glTranslatef(0, -3, 0);
+    glRotatef(rotate_around - 50, 0, 1, 0);
 
-	/* Your code here */
-
-	if(rotate_around>360){ rotate_around = 0; }
 }
