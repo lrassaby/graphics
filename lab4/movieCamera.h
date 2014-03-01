@@ -81,6 +81,8 @@ class movieCamera : public Camera {
     	=============================================== */ 
 		void spinAroundPoint(float your_x, float your_y, float your_z, float distance);
 
+        void zoomIn(float your_x, float your_y, float your_z);
+
 
 	private:
 		// Matrices to hold camera transformations
@@ -96,7 +98,7 @@ class movieCamera : public Camera {
 		// so we can spint around the object with each call at an incremented
 		// position
 		static float rotate_around;
-
+        static float zoom;
 };
 
 #endif

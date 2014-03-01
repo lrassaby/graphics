@@ -363,23 +363,23 @@ void myGlutDisplay(void)
 		// running on the camera.
 		cout << difftime(time(NULL),start) << "s : ";
 		if(difftime(time(NULL),start) <= 2){
-			std::cout << "orthogonal" << endl;
-			camera1->orthogonal(-1,1,-1,1,1,10);	// Get a unit perspective from above
+			std::cout << "zoom in" << endl;
+			camera1->zoomIn(3,0,0);
 		}
-		else if(difftime(time(NULL),start) > 2 && difftime(time(NULL),start) <= 6){
+		else if(difftime(time(NULL),start) > 2 && difftime(time(NULL),start) <= 4){
 			std::cout << "Close Up" << endl;
 			// Close up shot on the T-Rex
 			camera1->closeUp(trex->getXPosition(), trex->getYPosition(),trex->getZPosition(),
 							1,10);	
 		}
-		else if(difftime(time(NULL),start) > 6 && difftime(time(NULL),start) <= 10){
+		else if(difftime(time(NULL),start) > 4 && difftime(time(NULL),start) <= 8){
 			std::cout << "perspective shot" << endl;
 			//camera1->perspective(105,.75,1,10);	// Get the regular perspective
 			camera1->follow(trex->getXPosition(), trex->getYPosition()-2,trex->getZPosition(),
 				0, 0, 0,
 				0, 0, 0); // attach the camera to the t-rex
 		}
-		else if(difftime(time(NULL),start) > 10 && difftime(time(NULL),start) <= 14){
+		else if(difftime(time(NULL),start) > 8 && difftime(time(NULL),start) <= 14){
 			std::cout << "follow cam" << endl;
 			// Spin around a point in space.
 			// Radius is fixed, but could be adjusted.

@@ -25,6 +25,7 @@ float movieCamera::translate[] = { 1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1 };
 float movieCamera::rotate[] = 	{ 1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1 };
 float movieCamera::scale[] = 	{ 1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1 };
 float movieCamera::rotate_around = 0;
+float movieCamera::zoom = 0;
 
 enum dimensions {X, Y, Z};
 
@@ -63,6 +64,11 @@ void movieCamera::closeUp(float your_x, float your_y, float your_z, float near, 
 
     Matrix modelview = GetModelViewMatrix();
     glMultMatrixd(modelview.unpack());
+}
+
+void movieCamera::zoomIn(float your_x, float your_y, float your_z) {
+    zoom += 0.03;
+    glTranslatef(your_x, your_y - zoom/5, your_z + zoom);
 }
 
 /*
@@ -117,11 +123,11 @@ void movieCamera::follow(float your_x, float your_y, float your_z,
       Precondition:
       Postcondition:
 	=============================================== */ 
-void movieCamera::spinAroundPoint(float your_x, float your_y, float your_z, float distance){
+void movieCamera::spinAroundPoint(float your_x, float your_y, float your_z, float distance)
+{
 	rotate_around += 1;
     
     if(rotate_around>360){ rotate_around = 0; }
-    glTranslatef(0, -3, 0);
-    glRotatef(rotate_around - 50, 0, 1, 0);
-
+    glTranslatef(your_x - distance/2, -3, your_z - distance/2);
+    glRotatef(rotate_around - 30, 0, 1, 0);
 }
