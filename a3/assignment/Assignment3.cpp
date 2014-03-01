@@ -38,7 +38,9 @@ bool initialrender = true;
 
 /** These are GLUI control panel objects ***/
 int  main_window;
-string filenamePath = "data/test/ball.xml";
+string louispath = "/Users/louisrassaby/Dropbox/Comp175/part2/a3/assignment/data/general/ball.xml";
+string jaymepath = "";
+string filenamePath = louispath;
 GLUI_EditText* filenameTextField = NULL;
 
 

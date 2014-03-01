@@ -1,7 +1,7 @@
 #include "SceneRender.h"
 #include "SceneData.h"
 #include <GL/glui.h>
-
+#include <iostream>
 enum dimensions {X, Y, Z};
 
 Matrix buildTransformation(SceneTransformation *trans);
@@ -38,8 +38,9 @@ void SceneRender::render()
 {
     for (int i = 0; i < nodes.size(); ++i)
     {
-        glMatrixMode(GL_MODELVIEW);
-        glLoadMatrixd(nodes[i].composite.unpack());
+       /* glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
+        glLoadMatrixd(nodes[i].composite.unpack());*/
         for (int j = 0; j < nodes[i].primitives.size(); ++j) {
             ScenePrimitive *obj = nodes[i].primitives[j];
             /*
@@ -51,15 +52,19 @@ void SceneRender::render()
             Shape *shape;
             switch (obj->type) {
                 case SHAPE_CUBE:
+                    std::cerr << "Making a cube" << std::endl; 
                     shape = cube;
                     break;
                 case SHAPE_CYLINDER:
+                    std::cerr << "Making a cylinder" << std::endl; 
                     shape = cylinder;
                     break;
                 case SHAPE_CONE:
+                    std::cerr << "Making a cone" << std::endl; 
                     shape = cone;
                     break;
                 case SHAPE_SPHERE:
+                    std::cerr  << "Making a sphere" << std::endl; 
                     shape = sphere;
                     break;
                 default:
