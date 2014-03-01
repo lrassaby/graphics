@@ -1,4 +1,4 @@
-#ifndef COHE_H
+#ifndef CONE_H
 #define CONE_H
 
 #include "Round.h"

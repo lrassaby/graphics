@@ -1,6 +1,6 @@
 CC= g++
 
-LCFLAGS_QUIET= -w
+LCFLAGS_QUIET= -g -w
 LCFLAGS_VERBOSE= -g -Wall -Wextra
 LLFLAGS= -L/usr/local/Cellar/glui/2.36/lib -I/usr/local/Cellar/glui/2.36/include -framework OpenGL -framework GLUT -lglui 
 
@@ -10,7 +10,7 @@ MCFRAME = -framework OpenGL -framework GLUT -framework GLUI
 
 TARGET = run
 
-CFILES = Assignment3.cpp SceneParser.cpp tinyxml.cpp tinyxmlerror.cpp tinyxmlparser.cpp Camera.cpp Cube.cpp Cylinder.cpp Cone.cpp Sphere.cpp Face.cpp Shape.cpp Round.cpp Special.cpp Render.cpp
+CFILES = Assignment3.cpp SceneParser.cpp tinyxml.cpp tinyxmlerror.cpp tinyxmlparser.cpp Camera.cpp Cube.cpp Cylinder.cpp Cone.cpp Sphere.cpp Face.cpp Shape.cpp Round.cpp Special.cpp SceneRender.cpp
 
 all: louis
 

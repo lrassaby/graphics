@@ -13,7 +13,7 @@
 #include "Sphere.h"
 #include "SceneParser.h"
 #include "Camera.h"
-#include "Render.h"
+#include "SceneRender.h"
 
 using namespace std;
 
@@ -34,6 +34,8 @@ float lookX = -2;
 float lookY = -2;
 float lookZ = -2;
 
+bool initialrender = true;
+
 /** These are GLUI control panel objects ***/
 int  main_window;
 string filenamePath = "data/test/ball.xml";
@@ -48,6 +50,8 @@ Sphere* sphere = new Sphere();
 Shape* shape = NULL;
 SceneParser* parser = NULL;
 Camera* camera = new Camera();
+
+SceneRender renderer(cube, cylinder, cone, sphere, &segmentsX, &segmentsY);
 
 void setupCamera();
 
@@ -67,29 +71,6 @@ void callback_load(int id) {
 	setupCamera();
 }
 
-void renderShape (int shapeType) {
-	switch (shapeType) {
-	case SHAPE_CUBE:
-		shape = cube;
-		break;
-	case SHAPE_CYLINDER:
-		shape = cylinder;
-		break;
-	case SHAPE_CONE:
-		shape = cone;
-		break;
-	case SHAPE_SPHERE:
-		shape = sphere;
-		break;
-	case SHAPE_SPECIAL1:
-		shape = cube;
-		break;
-	default:
-		shape = cube;
-	}
-	shape->setSegments(segmentsX, segmentsY);
-	shape->draw();
-}
 
 /***************************************** myGlutIdle() ***********/
 
@@ -259,10 +240,12 @@ void myGlutDisplay(void)
 	for (int i = 0; i < NUM_OPENGL_LIGHTS; i++) {
 		glDisable(GL_LIGHT0 + i);
 	}
-    
-	SceneNode *root = parser->getRootNode();
-	Render renderer;
-	renderer.flatten(root, Matrix());
+    if (initialrender) {
+    	SceneNode *root = parser->getRootNode();	
+    	renderer.flatten(root, Matrix());
+    	initialrender = false;
+    }	 
+    renderer.render();
 
 	//drawing the axes
 	glEnable(GL_COLOR_MATERIAL);
@@ -394,7 +377,7 @@ int main(int argc, char* argv[])
 
 	glui->add_column(true);
 
-	GLUI_Panel *render_panel = glui->add_panel("Render");
+	GLUI_Panel *render_panel = glui->add_panel("SceneRender");
 	new GLUI_Checkbox(render_panel, "Wireframe", &wireframe);
 	new GLUI_Checkbox(render_panel, "Fill", &fillObj);
 	(new GLUI_Spinner(render_panel, "Segments X:", &segmentsX))
