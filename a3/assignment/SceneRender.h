@@ -26,6 +26,7 @@ class SceneRender {
         Cylinder* cylinder;
         Cone* cone;
         Sphere* sphere;
+
         int *segmentsX, *segmentsY;
 };
 

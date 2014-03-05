@@ -43,12 +43,23 @@ void SceneRender::render()
         glLoadMatrixd(nodes[i].composite.unpack());*/
         for (int j = 0; j < nodes[i].primitives.size(); ++j) {
             ScenePrimitive *obj = nodes[i].primitives[j];
-            /*
-            glLightfv(GL_LIGHT0, GL_SPECULAR, obj->material.cSpecular);
-            glLightfv(GL_LIGHT0, GL_AMBIENT, obj->material.cAmbient);
-            glLightfv(GL_LIGHT0, GL_DIFFUSE, obj->material.cDiffuse);
-            glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, obj->material.shininess);
-            */
+            SceneColor spec = obj->material.cSpecular, amb = obj->material.cAmbient, diff = obj->material.cDiffuse;
+        
+            std::cerr << "specular: " << spec.r << " " << spec.g << " " << spec.b << " " << spec.a << endl;
+            std::cerr << "ambient: " << amb.r << " " << amb.g << " " << amb.b << " " << amb.a << endl;
+            std::cerr << "diffuse: " << diff.r << " " << diff.g << " " << diff.b << " " << diff.a << endl;
+
+            // glEnable (GL_COLOR_MATERIAL);
+           // glEnable(GL_POLYGON_OFFSET_FILL);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, obj->material.cAmbient.channels);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, obj->material.cDiffuse.channels);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, obj->material.cSpecular.channels);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, obj->material.cEmissive.channels);
+            // FIND A WAY TO DO REFLECTIVE AND TRANSPARENT
+            // glMaterialfv(GL_FRONT_AND_BACK, GL_REFLECTIVE, obj->material.cReflective.channels);
+            // glMaterialfv(GL_FRONT_AND_BACK, GL_TRANSPARENT, obj->material.cTransparent.channels);
+            glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, obj->material.shininess); 
+ 
             Shape *shape;
             switch (obj->type) {
                 case SHAPE_CUBE:
@@ -70,6 +81,7 @@ void SceneRender::render()
                 default:
                     shape = cube;
             }
+            //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             shape->setSegments(*segmentsX, *segmentsY);
             shape->draw();
         } 

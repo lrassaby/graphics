@@ -53,8 +53,8 @@ Shape* shape = NULL;
 SceneParser* parser = NULL;
 Camera* camera = new Camera();
 
-SceneRender renderer(cube, cylinder, cone, sphere, &segmentsX, &segmentsY);
 
+SceneRender renderer(cube, cylinder, cone, sphere, &segmentsX, &segmentsY);
 void setupCamera();
 
 void callback_load(int id) {
@@ -243,11 +243,13 @@ void myGlutDisplay(void)
 		glDisable(GL_LIGHT0 + i);
 	}
     if (initialrender) {
+    	// build the flattened tree
     	SceneNode *root = parser->getRootNode();	
     	renderer.flatten(root, Matrix());
+		// get global data and camera data 
     	initialrender = false;
     }	 
-    renderer.render();
+    
 
 	//drawing the axes
 	glEnable(GL_COLOR_MATERIAL);
@@ -266,6 +268,7 @@ void myGlutDisplay(void)
 		glDisable(GL_POLYGON_OFFSET_FILL);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		//TODO: draw wireframe of the scene...
+		renderer.render();
 		// note that you don't need to applyMaterial, just draw the geometry
 	}
 
@@ -282,6 +285,7 @@ void myGlutDisplay(void)
 		glEnable(GL_POLYGON_OFFSET_FILL);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		//TODO: render the scene...
+		renderer.render();
 		// note that you should always applyMaterial first, then draw the geometry
 	}
 	glDisable(GL_LIGHTING);
