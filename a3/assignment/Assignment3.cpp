@@ -460,9 +460,9 @@ void flatten(SceneNode *root, Matrix modelView, Matrix projection)
     		case TRANSFORMATION_TRANSLATE:
     			transmat = 
 	    		Matrix(1, 0, 0, trans->translate[X],
-	    			0, 1, 0, trans->translate[Y],
-	    			0, 0, 1, trans->translate[Z],
-	    			0, 0, 0, 1);
+	    			   0, 1, 0, trans->translate[Y],
+	    			   0, 0, 1, trans->translate[Z],
+	    			   0, 0, 0, 1);
 	    		modelView = modelView * transmat;
 	    		break;
     		case TRANSFORMATION_ROTATE:
@@ -472,10 +472,10 @@ void flatten(SceneNode *root, Matrix modelView, Matrix projection)
     		case TRANSFORMATION_SCALE:
 	    		transmat =
 	    		Matrix(trans->scale[X], 0, 0, 0,
-	    			0, trans->scale[Y], 0, 0,
-	    			0, 0, trans->scale[Z], 0,
-	    			0, 0, 0, 1);
-	    		projection = projection * transmat;
+	    			   0, trans->scale[Y], 0, 0,
+	    			   0, 0, trans->scale[Z], 0,
+	    			   0, 0, 0, 1);
+	    		modelView = modelView * transmat;
     			break;
     		case TRANSFORMATION_MATRIX:
     			transmat = trans->matrix;
@@ -498,24 +498,26 @@ void flatten(SceneNode *root, Matrix modelView, Matrix projection)
 void render() 
 {
     for (int i = 0; i < nodes.size(); ++i) {
+
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        glMultMatrixd(camera->GetProjectionMatrix().unpack());
+        glMultMatrixd(nodes[i].projection.unpack());
+
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
+        glMultMatrixd(camera->GetModelViewMatrix().unpack());
+        glPushMatrix();
+        glMultMatrixd(nodes[i].modelView.unpack());
+
         for (int j = 0; j < nodes[i].primitives.size(); ++j) {
             ScenePrimitive *obj = nodes[i].primitives[j];
             if (!wireframe) {
             	applyMaterial(obj->material);
             }
-            
-            glMatrixMode(GL_PROJECTION);
-            glLoadIdentity();
-            glMultMatrixd(camera->GetProjectionMatrix().unpack());
-            glMultMatrixd(nodes[i].projection.unpack());
-
-            glMatrixMode(GL_MODELVIEW);
-            glLoadIdentity();
-            glMultMatrixd(camera->GetModelViewMatrix().unpack());
-            glMultMatrixd(nodes[i].modelView.unpack());
-            
             renderShape(obj->type);
         } 
+        glPopMatrix();
     } 
 }
 
@@ -532,6 +534,4 @@ Matrix calcRotate(Vector axis, double gamma)
     M2_inv = inv_rotZ_mat(phi);
 
     return M1_inv * M2_inv * M3 * M2 * M1;
-    
-    //return rotX_mat(gamma) * rotZ_mat(phi) * rotY_mat(theta);
 }
