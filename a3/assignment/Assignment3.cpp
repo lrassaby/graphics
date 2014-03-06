@@ -52,11 +52,13 @@ Camera* camera = new Camera();
 /******************************************************/
 /* global variables added by Jayme and Louis */
 enum dimensions {X, Y, Z};
+
 struct RenderNode {
 	Matrix modelView;
 	Matrix projection;
     std::vector<ScenePrimitive*> primitives;
 };
+
 std::vector<RenderNode> nodes;
 bool initialload = true;
 Matrix calcRotate(Vector axis, double gamma);
@@ -73,6 +75,9 @@ void callback_load(int id) {
 		return;
 	}
 	printf ("%s\n", filenameTextField->get_text());
+
+    nodes.clear();
+    initialload = true;
 
 	if (parser != NULL) {
 		delete parser;
@@ -516,5 +521,6 @@ Matrix calcRotate(Vector axis, double gamma)
 {
     double theta = atan2(axis[Z], axis[X]);
     double phi = -atan2(axis[Y], sqrt(axis[X] * axis[X] + axis[Z] * axis[Z]));
-    return rotX_mat(gamma) * rotY_mat(theta) * rotZ_mat(phi);
+    return rotZ_mat(phi) * rotY_mat(theta) * rotX_mat(gamma);
+    //return rotX_mat(gamma) * rotY_mat(theta) * rotZ_mat(phi); 
 }
