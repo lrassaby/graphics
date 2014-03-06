@@ -276,11 +276,10 @@ void myGlutDisplay(void)
 	}
 
 	if (initialload) {
-		SceneNode* root = parser->getRootNode();
+		SceneNode *root = parser->getRootNode();
 		flatten(root, Matrix(), Matrix());
 		initialload = false;
 	}
-	// Matrix compositeMatrix;
 
 	//drawing the axes
 	glEnable(GL_COLOR_MATERIAL);
