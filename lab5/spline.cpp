@@ -109,6 +109,7 @@ void spline::update(int _resolution){
 	std::cout << "resolution: " << resolution << " points: "<< points << " Array Table Size:"<< resolution*points*3+3 << std::endl;
 }
 
+
 /*	===============================================
 		Desc:			This function draws a spline by making opengl calls of the form
 							glPointSize(1.0);
@@ -130,14 +131,25 @@ void spline::update(int _resolution){
 		Postcondition:
 =============================================== */ 
 void spline::draw_spline(int resolution, int output){
-
-	/*  
-
-
-					You Implement this Code  
-
-	*/
-	
+	float q_x, q_y, q_z;
+	controlPoint *start = head, *goal;
+	glColor3f(1, 0, 0);
+	glPointSize(1.0);
+	glBegin(GL_POINTS);
+	while(start != tail) {
+		goal = start-> next;
+		float x_distance = goal->x - start->x;
+		float y_distance = goal->y - start->y;
+		float z_distance = goal->z - start->z;
+		for(int i = 0; i < resolution; ++i) {
+			// q_x = calculate_Spline(((float) i) / resolution, start->x, goal->x, 0, 0);
+			q_y = calculate_Spline(((float) i) / resolution, start->y, goal->y, 0, 0);
+			q_z = calculate_Spline(((float) i) / resolution, start->z, goal->z, 0, 0);
+			glVertex3f(start -> x + ((float) i) / resolution, q_y, q_z);
+		}	
+		start = start -> next;
+	}	
+	glEnd();
 }
 
 /*	===============================================
@@ -154,15 +166,10 @@ void spline::draw_spline(int resolution, int output){
 		Postcondition:
 =============================================== */ 
 float spline::calculate_Spline (float t, float S, float G, float Vs, float Vg) {
-  
-  	/*  
-
-
-					You Implement this Code  
-
-	*/
-
-	return 0; // For now, just return 0 so this code compiles...
+	return ( 1*S + 0*G + 0*Vs + 0*Vg) + 
+		   ( 0*S + 0*G + 1*Vs + 0*Vg) * t + 
+	       (-3*S + 3*G - 2*Vs - 1*Vg) * t * t + 
+	       ( 2*S - 2*G + 1*Vs + 1*Vg) * t * t * t;
 }
 
 /*	===============================================
