@@ -49,22 +49,25 @@ Shape* shape = NULL;
 SceneParser* parser = NULL;
 Camera* camera = new Camera();
 
-/******************************************************/
-/* global variables added by Jayme and Louis */
-enum dimensions {X, Y, Z};
 
+/******************************************************/
+/* Added by Jayme and Louis */
+
+/* data types */
 struct RenderNode {
 	Matrix modelView;
-	Matrix projection;
     std::vector<ScenePrimitive*> primitives;
 };
+enum dimensions {X, Y, Z};
 
+/* global variables */
 std::vector<RenderNode> nodes;
 bool initialload = true;
+
+/* function signatures */
 Matrix calcRotate(Vector axis, double gamma);
-void flatten(SceneNode *root, Matrix modelView, Matrix projection);
+void flatten(SceneNode *root, Matrix modelView);
 void render();
-/* end globals */
 /******************************************************/
 
 void setupCamera();
@@ -282,7 +285,7 @@ void myGlutDisplay(void)
 
 	if (initialload) {
 		SceneNode *root = parser->getRootNode();
-		flatten(root, Matrix(), Matrix());
+		flatten(root, Matrix());
 		initialload = false;
 	}
 
@@ -303,9 +306,7 @@ void myGlutDisplay(void)
 	if (wireframe) {
 		glDisable(GL_POLYGON_OFFSET_FILL);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		//TODO: draw wireframe of the scene...
 		render();
-		// note that you don't need to applyMaterial, just draw the geometry
 	}
 
     glDisable(GL_COLOR_MATERIAL);
@@ -320,9 +321,7 @@ void myGlutDisplay(void)
 	if (fillObj == 1) {
 		glEnable(GL_POLYGON_OFFSET_FILL);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		//TODO: render the scene...
 		render();
-		// note that you should always applyMaterial first, then draw the geometry
 	}
 	glDisable(GL_LIGHTING);
 	
@@ -335,6 +334,7 @@ void myGlutDisplay(void)
 
 void onExit()
 {
+    nodes.clear();
 	delete cube;
 	delete cylinder;
 	delete cone;
@@ -449,7 +449,8 @@ int main(int argc, char* argv[])
 /***********************************************************************************************/
 
 
-void flatten(SceneNode *root, Matrix modelView, Matrix projection) 
+/* flatten - parse SceneNode tree and flatten into a RenderNode vector */
+void flatten(SceneNode *root, Matrix modelView)
 {
     RenderNode node;
     Matrix transmat;
@@ -479,22 +480,20 @@ void flatten(SceneNode *root, Matrix modelView, Matrix projection)
     			break;
     		case TRANSFORMATION_MATRIX:
     			transmat = trans->matrix;
-    			projection = projection * transmat;
+    			modelView = modelView * transmat;
     			break;
     	}
     }
     node.primitives = root->primitives;
-    
     node.modelView = modelView;
-    node.projection = projection;
-
     nodes.push_back(node);
 
     for (int i = 0; i < root->children.size(); i++) {
-        flatten(root->children[i], modelView, projection);
+        flatten(root->children[i], modelView);
     }
 }
 
+/* render - traverse list and render the objects */
 void render() 
 {
     for (int i = 0; i < nodes.size(); ++i) {
@@ -502,7 +501,6 @@ void render()
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
         glMultMatrixd(camera->GetProjectionMatrix().unpack());
-        glMultMatrixd(nodes[i].projection.unpack());
 
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
@@ -521,7 +519,7 @@ void render()
     } 
 }
 
-/* rotations around origin */
+/* calcRotate - an arbitrary rotation around origin */
 Matrix calcRotate(Vector axis, double gamma) 
 {
     double theta = atan2(axis[Z], axis[X]);
