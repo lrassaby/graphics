@@ -1,6 +1,6 @@
 CC= g++
 
-LCFLAGS_QUIET= -g -w
+LCFLAGS_QUIET= -w -O2
 LCFLAGS_VERBOSE= -g -Wall -Wextra
 LLFLAGS= -L/usr/local/Cellar/glui/2.36/lib -I/usr/local/Cellar/glui/2.36/include -framework OpenGL -framework GLUT -lglui 
 
