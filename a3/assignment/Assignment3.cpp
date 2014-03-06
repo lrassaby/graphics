@@ -455,7 +455,8 @@ void flatten(SceneNode *root, Matrix modelView)
     RenderNode node;
     Matrix transmat;
     SceneTransformation *trans;
-    for (int i = 0; i < root->transformations.size(); i++) {
+    int size = root->transformations.size();
+    for (int i = 0; i < size; i++) {
     	trans = root->transformations[i];
     	switch (trans->type) {
     		case TRANSFORMATION_TRANSLATE:
@@ -496,7 +497,8 @@ void flatten(SceneNode *root, Matrix modelView)
 /* render - traverse list and render the objects */
 void render() 
 {
-    for (int i = 0; i < nodes.size(); ++i) {
+    int nodes_size = nodes.size();
+    for (int i = 0; i < nodes_size; ++i) {
 
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
@@ -505,17 +507,16 @@ void render()
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
         glMultMatrixd(camera->GetModelViewMatrix().unpack());
-        glPushMatrix();
         glMultMatrixd(nodes[i].modelView.unpack());
 
-        for (int j = 0; j < nodes[i].primitives.size(); ++j) {
+        int primitives_size = nodes[i].primitives.size(); 
+        for (int j = 0; j < primitives_size; ++j) {
             ScenePrimitive *obj = nodes[i].primitives[j];
             if (!wireframe) {
             	applyMaterial(obj->material);
             }
             renderShape(obj->type);
         } 
-        glPopMatrix();
     } 
 }
 
