@@ -36,7 +36,7 @@ float lookZ = -2;
 int  main_window;
 // string filenamePath = "/Users/louisrassaby/Dropbox/Comp175/part2/a3/assignment/data/general/ball.xml";
 //string filenamePath = "/Users/louisrassaby/Dropbox/Comp175/part2/a3/assignment/data/general/ball2.xml";
-string filenamePath = "/Users/jwoogerd/Desktop/Tufts/comp175/a3-final/a3/assignment/data/general/cone.xml";
+string filenamePath = "/Users/jwoogerd/Desktop/a3-Mac/data/general/cone.xml";
 GLUI_EditText* filenameTextField = NULL;
 
 
@@ -349,6 +349,9 @@ void onExit()
 
 int main(int argc, char* argv[])
 {
+    if (argc > 1) {
+        filenamePath = argv[1];
+    }
 	atexit(onExit);
 
 	/****************************************/
@@ -460,11 +463,11 @@ void flatten(SceneNode *root, Matrix modelView, Matrix projection)
 	    			0, 1, 0, trans->translate[Y],
 	    			0, 0, 1, trans->translate[Z],
 	    			0, 0, 0, 1);
-	    		modelView = transmat * modelView;
+	    		modelView = modelView * transmat;
 	    		break;
     		case TRANSFORMATION_ROTATE:
     			transmat = calcRotate(trans->rotate, trans->angle);
-    			modelView = transmat * modelView;
+    			modelView = modelView * transmat;
     			break;
     		case TRANSFORMATION_SCALE:
 	    		transmat =
@@ -472,11 +475,11 @@ void flatten(SceneNode *root, Matrix modelView, Matrix projection)
 	    			0, trans->scale[Y], 0, 0,
 	    			0, 0, trans->scale[Z], 0,
 	    			0, 0, 0, 1);
-	    		projection = transmat * projection;
+	    		projection = projection * transmat;
     			break;
     		case TRANSFORMATION_MATRIX:
     			transmat = trans->matrix;
-    			projection = transmat * projection;
+    			projection = projection * transmat;
     			break;
     	}
     }
@@ -521,6 +524,14 @@ Matrix calcRotate(Vector axis, double gamma)
 {
     double theta = atan2(axis[Z], axis[X]);
     double phi = -atan2(axis[Y], sqrt(axis[X] * axis[X] + axis[Z] * axis[Z]));
-    return rotZ_mat(phi) * rotY_mat(theta) * rotX_mat(gamma);
-    //return rotX_mat(gamma) * rotY_mat(theta) * rotZ_mat(phi); 
+    Matrix M1, M2, M3, M1_inv, M2_inv;
+    M1 = rotY_mat(theta); 
+    M2 = rotZ_mat(phi); 
+    M3 = rotX_mat(gamma);
+    M1_inv = inv_rotY_mat(theta);
+    M2_inv = inv_rotZ_mat(phi);
+
+    return M1_inv * M2_inv * M3 * M2 * M1;
+    
+    //return rotX_mat(gamma) * rotZ_mat(phi) * rotY_mat(theta);
 }
