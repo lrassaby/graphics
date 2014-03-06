@@ -4,7 +4,6 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <vector>
 #include <GL/glui.h>
 #include "Shape.h"
 #include "Cube.h"
@@ -13,7 +12,6 @@
 #include "Sphere.h"
 #include "SceneParser.h"
 #include "Camera.h"
-#include "SceneRender.h"
 
 using namespace std;
 
@@ -34,13 +32,11 @@ float lookX = -2;
 float lookY = -2;
 float lookZ = -2;
 
-bool initialrender = true;
-
 /** These are GLUI control panel objects ***/
 int  main_window;
-string louispath = "/Users/louisrassaby/Dropbox/Comp175/part2/a3/assignment/data/general/ball.xml";
-string jaymepath = "";
-string filenamePath = louispath;
+// string filenamePath = "/Users/louisrassaby/Dropbox/Comp175/part2/a3/assignment/data/general/ball.xml";
+//string filenamePath = "/Users/louisrassaby/Dropbox/Comp175/part2/a3/assignment/data/general/ball2.xml";
+string filenamePath = "/Users/jwoogerd/Desktop/Tufts/comp175/a3-final/a3/assignment/data/general/cone.xml";
 GLUI_EditText* filenameTextField = NULL;
 
 
@@ -53,8 +49,24 @@ Shape* shape = NULL;
 SceneParser* parser = NULL;
 Camera* camera = new Camera();
 
+/******************************************************/
+/* global variables added by Jayme and Louis */
+enum dimensions {X, Y, Z};
 
-SceneRender renderer(cube, cylinder, cone, sphere, &segmentsX, &segmentsY);
+struct RenderNode {
+	Matrix modelView;
+	Matrix projection;
+    std::vector<ScenePrimitive*> primitives;
+};
+
+std::vector<RenderNode> nodes;
+bool initialload = true;
+Matrix calcRotate(Vector axis, double gamma);
+void flatten(SceneNode *root, Matrix modelView, Matrix projection);
+void render();
+/* end globals */
+/******************************************************/
+
 void setupCamera();
 
 void callback_load(int id) {
@@ -63,6 +75,9 @@ void callback_load(int id) {
 		return;
 	}
 	printf ("%s\n", filenameTextField->get_text());
+
+    nodes.clear();
+    initialload = true;
 
 	if (parser != NULL) {
 		delete parser;
@@ -73,6 +88,29 @@ void callback_load(int id) {
 	setupCamera();
 }
 
+void renderShape (int shapeType) {
+	switch (shapeType) {
+	case SHAPE_CUBE:
+		shape = cube;
+		break;
+	case SHAPE_CYLINDER:
+		shape = cylinder;
+		break;
+	case SHAPE_CONE:
+		shape = cone;
+		break;
+	case SHAPE_SPHERE:
+		shape = sphere;
+		break;
+	case SHAPE_SPECIAL1:
+		shape = cube;
+		break;
+	default:
+		shape = cube;
+	}
+	shape->setSegments(segmentsX, segmentsY);
+	shape->draw();
+}
 
 /***************************************** myGlutIdle() ***********/
 
@@ -227,10 +265,9 @@ void myGlutDisplay(void)
 	glMatrixMode(GL_PROJECTION);
 	Matrix projection = camera->GetProjectionMatrix();
 	glLoadMatrixd(projection.unpack());
-
-    Point eye = Point(eyeX, eyeY, eyeZ);
-    Vector look = Vector(lookX, lookY, lookZ);
-    Vector up = Vector(0, 1, 0);
+	Point eye(eyeX, eyeY, eyeZ);
+	Vector look(lookX, lookY, lookZ);
+	Vector up(0, 1, 0);
 	camera->Orient(eye, look, up);
 	camera->RotateV(camRotV);
 	camera->RotateU(camRotU);
@@ -242,14 +279,12 @@ void myGlutDisplay(void)
 	for (int i = 0; i < NUM_OPENGL_LIGHTS; i++) {
 		glDisable(GL_LIGHT0 + i);
 	}
-    if (initialrender) {
-    	// build the flattened tree
-    	SceneNode *root = parser->getRootNode();	
-    	renderer.flatten(root, Matrix());
-		// get global data and camera data 
-    	initialrender = false;
-    }	 
-    
+
+	if (initialload) {
+		SceneNode *root = parser->getRootNode();
+		flatten(root, Matrix(), Matrix());
+		initialload = false;
+	}
 
 	//drawing the axes
 	glEnable(GL_COLOR_MATERIAL);
@@ -262,13 +297,14 @@ void myGlutDisplay(void)
 	glColor3f(0.0, 0.0, 1.0);
 	glVertex3f(0, 0, 0); glVertex3f(0, 0, 1.0);
 	glEnd();
-
 	glColor3f(1.0, 0.0, 0.0);
+
+
 	if (wireframe) {
 		glDisable(GL_POLYGON_OFFSET_FILL);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		//TODO: draw wireframe of the scene...
-		renderer.render();
+		render();
 		// note that you don't need to applyMaterial, just draw the geometry
 	}
 
@@ -285,7 +321,7 @@ void myGlutDisplay(void)
 		glEnable(GL_POLYGON_OFFSET_FILL);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		//TODO: render the scene...
-		renderer.render();
+		render();
 		// note that you should always applyMaterial first, then draw the geometry
 	}
 	glDisable(GL_LIGHTING);
@@ -383,7 +419,7 @@ int main(int argc, char* argv[])
 
 	glui->add_column(true);
 
-	GLUI_Panel *render_panel = glui->add_panel("SceneRender");
+	GLUI_Panel *render_panel = glui->add_panel("Render");
 	new GLUI_Checkbox(render_panel, "Wireframe", &wireframe);
 	new GLUI_Checkbox(render_panel, "Fill", &fillObj);
 	(new GLUI_Spinner(render_panel, "Segments X:", &segmentsX))
@@ -402,4 +438,89 @@ int main(int argc, char* argv[])
 	glutMainLoop();
 
 	return EXIT_SUCCESS;
+}
+
+
+/***********************************************************************************************/
+/***************************** Code added by Louis and Jayme ***********************************/
+/***********************************************************************************************/
+
+
+void flatten(SceneNode *root, Matrix modelView, Matrix projection) 
+{
+    RenderNode node;
+    Matrix transmat;
+    SceneTransformation *trans;
+    for (int i = 0; i < root->transformations.size(); i++) {
+    	trans = root->transformations[i];
+    	switch (trans->type) {
+    		case TRANSFORMATION_TRANSLATE:
+    			transmat = 
+	    		Matrix(1, 0, 0, trans->translate[X],
+	    			0, 1, 0, trans->translate[Y],
+	    			0, 0, 1, trans->translate[Z],
+	    			0, 0, 0, 1);
+	    		modelView = transmat * modelView;
+	    		break;
+    		case TRANSFORMATION_ROTATE:
+    			transmat = calcRotate(trans->rotate, trans->angle);
+    			modelView = transmat * modelView;
+    			break;
+    		case TRANSFORMATION_SCALE:
+	    		transmat =
+	    		Matrix(trans->scale[X], 0, 0, 0,
+	    			0, trans->scale[Y], 0, 0,
+	    			0, 0, trans->scale[Z], 0,
+	    			0, 0, 0, 1);
+	    		projection = transmat * projection;
+    			break;
+    		case TRANSFORMATION_MATRIX:
+    			transmat = trans->matrix;
+    			projection = transmat * projection;
+    			break;
+    	}
+    }
+    node.primitives = root->primitives;
+    
+    node.modelView = modelView;
+    node.projection = projection;
+
+    nodes.push_back(node);
+
+    for (int i = 0; i < root->children.size(); i++) {
+        flatten(root->children[i], modelView, projection);
+    }
+}
+
+void render() 
+{
+    for (int i = 0; i < nodes.size(); ++i) {
+        for (int j = 0; j < nodes[i].primitives.size(); ++j) {
+            ScenePrimitive *obj = nodes[i].primitives[j];
+            if (!wireframe) {
+            	applyMaterial(obj->material);
+            }
+            
+            glMatrixMode(GL_PROJECTION);
+            glLoadIdentity();
+            glMultMatrixd(camera->GetProjectionMatrix().unpack());
+            glMultMatrixd(nodes[i].projection.unpack());
+
+            glMatrixMode(GL_MODELVIEW);
+            glLoadIdentity();
+            glMultMatrixd(camera->GetModelViewMatrix().unpack());
+            glMultMatrixd(nodes[i].modelView.unpack());
+            
+            renderShape(obj->type);
+        } 
+    } 
+}
+
+/* rotations around origin */
+Matrix calcRotate(Vector axis, double gamma) 
+{
+    double theta = atan2(axis[Z], axis[X]);
+    double phi = -atan2(axis[Y], sqrt(axis[X] * axis[X] + axis[Z] * axis[Z]));
+    return rotZ_mat(phi) * rotY_mat(theta) * rotX_mat(gamma);
+    //return rotX_mat(gamma) * rotY_mat(theta) * rotZ_mat(phi); 
 }
