@@ -35,7 +35,8 @@ float lookZ = -2;
 /** These are GLUI control panel objects ***/
 int  main_window;
 // string filenamePath = "/Users/louisrassaby/Dropbox/Comp175/part2/a3/assignment/data/general/ball.xml";
-string filenamePath = "/Users/louisrassaby/Dropbox/Comp175/part2/a3/assignment/data/general/ball2.xml";
+//string filenamePath = "/Users/louisrassaby/Dropbox/Comp175/part2/a3/assignment/data/general/ball2.xml";
+string filenamePath = "/Users/jwoogerd/Desktop/Tufts/comp175/a3-final/a3/assignment/data/general/cone.xml";
 GLUI_EditText* filenameTextField = NULL;
 
 
@@ -450,7 +451,6 @@ void flatten(SceneNode *root, Matrix modelView, Matrix projection)
     	trans = root->transformations[i];
     	switch (trans->type) {
     		case TRANSFORMATION_TRANSLATE:
-    			break;
     			transmat = 
 	    		Matrix(1, 0, 0, trans->translate[X],
 	    			0, 1, 0, trans->translate[Y],
@@ -459,12 +459,10 @@ void flatten(SceneNode *root, Matrix modelView, Matrix projection)
 	    		modelView = transmat * modelView;
 	    		break;
     		case TRANSFORMATION_ROTATE:
-    			break;
     			transmat = calcRotate(trans->rotate, trans->angle);
     			modelView = transmat * modelView;
     			break;
     		case TRANSFORMATION_SCALE:
-    			break;
 	    		transmat =
 	    		Matrix(trans->scale[X], 0, 0, 0,
 	    			0, trans->scale[Y], 0, 0,
@@ -473,7 +471,6 @@ void flatten(SceneNode *root, Matrix modelView, Matrix projection)
 	    		projection = transmat * projection;
     			break;
     		case TRANSFORMATION_MATRIX:
-    			break;
     			transmat = trans->matrix;
     			projection = transmat * projection;
     			break;
@@ -502,10 +499,12 @@ void render()
             
             glMatrixMode(GL_PROJECTION);
             glLoadIdentity();
+            glMultMatrixd(camera->GetProjectionMatrix().unpack());
             glMultMatrixd(nodes[i].projection.unpack());
 
             glMatrixMode(GL_MODELVIEW);
             glLoadIdentity();
+            glMultMatrixd(camera->GetModelViewMatrix().unpack());
             glMultMatrixd(nodes[i].modelView.unpack());
             
             renderShape(obj->type);
@@ -514,7 +513,8 @@ void render()
 }
 
 /* rotations around origin */
-Matrix calcRotate(Vector axis, double gamma) {
+Matrix calcRotate(Vector axis, double gamma) 
+{
     double theta = atan2(axis[Z], axis[X]);
     double phi = -atan2(axis[Y], sqrt(axis[X] * axis[X] + axis[Z] * axis[Z]));
     return rotX_mat(gamma) * rotY_mat(theta) * rotZ_mat(phi);
