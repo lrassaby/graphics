@@ -166,6 +166,8 @@ void draw_grid(){
 
 /***************************************** myGlutDisplay() *****************/
 
+float oldcar[3];
+
 void myGlutDisplay(void)
 {
 	static float scale = 0.1;
@@ -188,7 +190,21 @@ void myGlutDisplay(void)
 	if(followCoaster==1){
 		glRotatef(90,0,1,0);
 		glRotatef(30,0,0,1);
+        glRotatef(90,0,1,0);
 		glTranslatef(splineSize*0.5-mySpline->getComputedX(coasterCar1Position),-mySpline->getComputedY(coasterCar1Position),-mySpline->getComputedZ(coasterCar1Position));
+        /*
+        float car[3], *camera = oldcar;
+        car[0] = mySpline->getComputedX(coasterCar1Position);
+        car[1] = mySpline->getComputedY(coasterCar1Position);
+        car[2] = mySpline->getComputedZ(coasterCar1Position);
+
+        gluLookAt(camera[0], camera[1], camera[2], 
+                  car[0],    car[1], car[2],
+                       0, 1, 0); 
+        oldcar[0] = car[0];
+        oldcar[1] = car[1];
+        oldcar[2] = car[2];
+        */
 	}
 
 	glPushMatrix();

@@ -16,6 +16,7 @@
 #include <cmath>
 #include "spline.h"
 
+
 /*	===============================================
 Desc:	Default constructor for spline
 Precondition: 	_resolution specifies how many points will be drawn between each control
@@ -29,7 +30,6 @@ spline::spline(int _resolution){
 
 	resolution = _resolution;
 	points = 0;
-	computed_x_y_z= NULL;
 }
 
 /*	===============================================
@@ -45,8 +45,6 @@ spline::~spline(){
 		delete iter;
 		iter = iter->next;
 	}
-
-	delete[] computed_x_y_z;
 }
 
 /*	===============================================
@@ -94,18 +92,8 @@ Precondition:
 Postcondition:
 =============================================== */
 void spline::update(int _resolution){
-
+    computed_x_y_z.clear();
 	resolution = _resolution;
-	// resize our array
-	if(computed_x_y_z==NULL){
-		computed_x_y_z = new float[resolution*points*3+3];
-	}
-	else
-	{ 	// resize! ewww, this is ugly though. We could speed up by doubling our size
-		// everytime and keep track of the capacity of our array versus memory taken.
-		delete[] computed_x_y_z;
-		computed_x_y_z = new float[resolution*points*3+3];
-	}
 	std::cout << "resolution: " << resolution << " points: "<< points << " Array Table Size:"<< resolution*points*3+3 << std::endl;
 }
 
@@ -142,10 +130,12 @@ void spline::draw_spline(int resolution, int output){
 		float y_distance = goal->y - start->y;
 		float z_distance = goal->z - start->z;
 		for(int i = 0; i < resolution; ++i) {
-			// q_x = calculate_Spline(((float) i) / resolution, start->x, goal->x, 0, 0);
+            q_x = start -> x + ((float) i) / resolution;
 			q_y = calculate_Spline(((float) i) / resolution, start->y, goal->y, 0, 0);
 			q_z = calculate_Spline(((float) i) / resolution, start->z, goal->z, 0, 0);
-			glVertex3f(start -> x + ((float) i) / resolution, q_y, q_z);
+            xyz to_add = {q_x, q_y, q_z};
+            computed_x_y_z.push_back(to_add);
+			glVertex3f(q_x, q_y, q_z);
 		}	
 		start = start -> next;
 	}	

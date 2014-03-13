@@ -15,7 +15,7 @@
 #define SPLINE_H
 
 #include "controlPoint.h"
-
+#include <vector>
 
 /*
 	
@@ -116,16 +116,13 @@ class spline{
 		Postcondition:
 		=============================================== */
 		float getComputedX(int point){
-			if(computed_x_y_z==NULL){return 0;}
-			return computed_x_y_z[point*3];
+			return computed_x_y_z[point].x;
 		}
 		float getComputedY(int point){
-			if(computed_x_y_z==NULL){return 0;}
-			return computed_x_y_z[point*3+1];
+			return computed_x_y_z[point].y;
 		}
 		float getComputedZ(int point){
-			if(computed_x_y_z==NULL){return 0;}
-			return computed_x_y_z[point*3+2];
+			return computed_x_y_z[point].z;
 		}
 
 	private:
@@ -152,7 +149,8 @@ class spline{
 		   4= your second y 
 		   5= your second z etc...
 		*/
-		float* computed_x_y_z;
+        struct xyz {float x, y, z;};
+        std::vector<xyz> computed_x_y_z;
 };
 
 #endif
