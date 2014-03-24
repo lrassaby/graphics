@@ -76,7 +76,7 @@ The unhinging transform should be ignored because it doesn't preserve angles.
 \noindent {\bf [1 point]} Given your eye-point $p_{eye}$ and the world-space point on the normalized film plane $p_{world}$ give the equation for the world-space ray you want to shoot into the scene. Specify your ray in the format $p + t\vec{d}$, where $p$ is a point and $\vec{d}$ is a normalized vector. 
 \solution{
 \begin{align*}
-\vec{k} &= p_{world} - p{eye}\\
+\vec{k} &= p_{world} - p_{eye}\\
 \vec{d} &= \frac{\vec{k}}{||\vec{k}||} \\
 r(t) &= p + t * \vec{d}
 \end{align*}
