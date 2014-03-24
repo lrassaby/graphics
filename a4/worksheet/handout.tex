@@ -1,0 +1,198 @@
+\documentclass[10pt,twocolumn]{article}
+\usepackage[margin=0.75in]{geometry}                % See geometry.pdf to learn the layout options. There are lots.
+\geometry{letterpaper}                   % ... or a4paper or a5paper or ... 
+%\geometry{landscape}                % Activate for for rotated page geometry
+%\usepackage[parfill]{parskip}    % Activate to begin paragraphs with an empty line rather than an indent
+\setlength{\columnsep}{1cm}
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{epstopdf}
+\usepackage{fullpage}
+\usepackage[usenames]{color}
+\usepackage{titlesec}
+\usepackage{hyperref}
+\usepackage{framed}
+
+\definecolor{Blue}{rgb}{.2, 0,.5}
+\newcommand{\solution}[1]{\textcolor{Blue}{\\{\bf Solution:} \\ #1}}  %Solution
+
+\definecolor{light-gray}{gray}{0.45}
+\titleformat{\section}
+{\color{black}\normalfont\Large\bfseries}
+{\color{black}\thesection}{1em}{}
+
+\titleformat{\subsection}
+{\color{light-gray}\normalfont\large\bfseries}
+{\color{light-gray}\thesubsection}{1em}{}
+
+\DeclareGraphicsRule{.tif}{png}{.png}{`convert #1 `dirname #1`/`basename #1 .tif`.png}
+
+\title{\Huge{\bf Algorithm 4: Intersect}}
+\author{Comp175: Introduction to Computer Graphics -- Spring 204}
+\date{Due:  {\bf Monday March 24th} at 11:59pm}                                           % Activate to display a given date or no date
+
+\begin{document}
+\maketitle
+%\section{}
+%\subsection{}
+
+\begin{verbatim}
+Your Names: Louis Rassaby
+            Jayme Woogerd
+
+Your CS Logins: lrassa01
+                jwoogerd
+\end{verbatim}
+
+\section{Instructions}
+Complete this assignment only with your teammate. You may use a calculator or computer algebra system. All your answers should be given in simplest form. When a numerical answer is required, provide a reduced fraction (i.e. 1/3) or at least three decimal places (i.e. 0.333). Show all work; write your answers on this sheet. This algorithm handout is worth 3\% of your final grade for the class.
+
+\section{Generating rays}
+For this assignment, you need to shoot a ray from the eye point through the center of each pixel.
+
+\begin{framed}
+\noindent {\bf [1 point]} Given a pixel with screen-space coordinates $x$ and $y$, and the width and height of the screen $x_{max}$ and $y_{max}$, what is the corresponding point, $p_{film}$, on the normalized film plane (note that this means that the film plane is at the distance of 1 from the eye point)? Assume that this is taking place after all of the perspective viewing transformations have been applied except for the unhinging transformation. Remember that a pixel y-value of 0 corresponds to the top of the screen.\\[5mm]
+\solution{
+We need an ordered pair $(x, y, z)$ such that
+\begin{itemize}
+\item $-1 < x < 1$
+\item $-1 < y < 1$
+\item $z = -1$
+\end{itemize}
+\[ p_{film} = \left( \frac{2x}{x_{max}} - 1, 1 - \frac{2y}{y_{max}}, -1\right)\]
+}
+\end{framed}
+
+\begin{framed}
+\noindent {\bf [1 point]} In {\tt Camera}, you transformed a point from world space to screen space by using the normalizing transformation. In {\tt Intersect} and {\tt Ray}, you need to transform $p_{film}$ on the normalized film plane into an untransformed world-space point, $p_{world}$, by performing the viewing transformation. Using only the components of the viewing transformation (and/or their inverses) write the equation for $M_{film-to-world}$, the composite transformation matrix that transforms $p_{film}$ to $p_{world}$, such that $p_{world} = M_{film-to-world} * p_{film}$.\\[5mm]
+\solution{
+\[M_{film-to-world} = \mbox{translate}^{-1} * \mbox{rotate}^{-1} * \mbox{scale}^{-1}\]
+The unhinging transform should be ignored because it doesn't preserve angles.
+} 
+\end{framed}
+
+\begin{framed}
+\noindent {\bf [1 point]} Given your eye-point $p_{eye}$ and the world-space point on the normalized film plane $p_{world}$ give the equation for the world-space ray you want to shoot into the scene. Specify your ray in the format $p + t\vec{d}$, where $p$ is a point and $\vec{d}$ is a normalized vector. 
+\solution{
+\begin{align*}
+\vec{k} &= p_{world} - p{eye}\\
+\vec{d} &= \frac{\vec{k}}{||\vec{k}||} \\
+r(t) &= p + t * \vec{d}
+\end{align*}
+}
+\end{framed}
+
+\section{Plane-Ray Intersection}
+
+Write out the plane-ray intersect equation in terms of $t$. Use the definition of a ray used in question 1, i.e. $p + t\vec{d}$. To get you started you might want to define
+an intersection point as $(x, y, z) = \langle p_x + \vec{d}_xt, p_y + \vec{d}_yt, p_z + \vec{d}_zt\rangle$, where $p$ is the eyepoint, and $\vec{d}$ is the direction of the ray we are shooting. 
+
+For this exercise, show how you would compute the intersection for two sides of the cube, namely the planes where x=0.5 and x=-0.5.
+
+\begin{framed}
+\noindent {\bf [1 points] Plane x = 0.5} 
+\solution{
+$x = 0.5$.
+Note that the bounds of $y$ are
+$ -0.5 < y < 0.5 $
+and the bounds of $z$ are
+$ -0.5 < z < 0.5$.
+\begin{align*}
+x &= 0.5 \\
+p_x + \vec{d}_x * t &= 0.5 \\
+t &= \frac{0.5 - p_x}{\vec{d}_x}
+\end{align*}
+}
+\end{framed}
+\begin{framed}
+\noindent {\bf [1 points] Plane x = -0.5} 
+\solution{
+$x = -0.5$.
+Note that the bounds of $y$ are
+$ -0.5 < y < 0.5 $
+and the bounds of $z$ are
+$ -0.5 < z < 0.5$.
+\begin{align*}
+x &= -0.5 \\
+p_x + \vec{d}_x * t &= -0.5 \\
+t &= \frac{-0.5 - p_x}{\vec{d}_x}
+\end{align*}
+}
+\end{framed}
+
+
+\section{Cone-Ray Intersection}
+{\it Special Instructions: For this problem, show all your work and circle, box, or bold your final answers.}\\\\
+Write out both of the cone-ray intersect equations in terms of $t$. There are two equations: one for the body of the cone, and one for the bottom cap. For your cone, use the same dimensions that you did in {\tt Shapes}. Use the definition of a ray used in question 1, i.e. $p + t\vec{d}$. To get you started you might want to define
+an intersection point as $(x, y, z) = \langle p_x + \vec{d}_xt, p_y + \vec{d}_yt, p_z + \vec{d}_zt\rangle$, where $p$ is the eyepoint, and $\vec{d}$ is the direction of the ray we are shooting. Looking over the the derivation of the implicit equations for the cylinder in the Raytracing lecture might prove to be useful.\\\\
+Recall that the equation of a circle on the 2D XZ coordinate plane is $x^2 + z^2 = r^2$. Think of our canonical unit cone as an infinite number of ``differential'' circles in the XZ plane stacked on top of one another in the Y direction; the bottommost circle has a radius of 1/2 and the topmost circle has a radius of 0. Then the equation of the unit cone is $x_2 + z_2 = k(y)^2$, where $k$ linearly interpolates the radius of the differential circle from 1/2 at the base to 0 at the top (see the lecture notes for a slightly more intuitive equation for the cone).\\\\
+The intersection points you compute are possible intersection points and need to be
+examined further (such as the $-0.5\le y\le 0.5$ restriction for the body of the cylinder
+in the lecture notes). However for this problem you are NOT required to list these
+restrictions.\\\\
+Note that in your program you will need to find intersection points by finding a value for $t$. If you do not find an explicit formula for $t$ (ie. $t = $some value(s)) for both the cone and the cap then you will have a very hard time writing the program.\\\\
+Finally, the equations you write should not use vectors but should be functions of the individual components of the vectors. By reducing your equations after deriving them, you eliminate unnecessary computation and thereby optimize your code before you even write it!
+\begin{framed}
+\noindent {\bf [3 points] Cone Body} 
+\solution{
+First, we come up with an equation for radius, based on the slope, $m = 2$. Then we can think about the points that make up the cone.
+\begin{align*}
+y &= 0.5 - 2 * radius\\
+radius &= \frac{0.5 - y}{2}
+\end{align*}
+Because the equation for any circle on the cone is $x^2 + z^2 = radius^2$, by our definitions for $x$, $z$, and $radius$, we get
+\begin{align*}
+(p_x + \vec{d}_x * t)^2 + (p_z + \vec{d}_z * t)^2 &= \left(\frac{0.5 - (p_x + \vec{d}_x * t)}{2}\right)^2\\
+\left(\vec{d}^2_x + \vec{d}^2_z - \frac{1}{4}\vec{d}^2_y\right)t^2 &+\\ 
+\left(2p_x\vec{d}_x + 2 p_z\vec{d}_z - \frac{1}{2}p_y\vec{d}_y + \frac{1}{4}\vec{d}_y\right)t &+\\
+\left(p^2_x + p^2_z - \frac{1}{4}p^2_y + \frac{1}{4}p_y - \frac{1}{16}\right)&= 0
+\end{align*}
+So, for $At^2+Bt+C$ we get
+\begin{align*}
+A &= \left(\vec{d}^2_x + \vec{d}^2_z - \frac{1}{4}\vec{d}^2_y\right)\\
+B &= \left(2p_x\vec{d}_x + 2 p_z\vec{d}_z - \frac{1}{2}p_y\vec{d}_y + \frac{1}{4}\vec{d}_y\right)\\
+C &= \left(p^2_x + p^2_z - \frac{1}{4}p^2_y + \frac{1}{4}p_y - \frac{1}{16}\right)
+\end{align*}
+if the discriminant, $B^2 - 4AC \geq 0$, then 
+\begin{align*}
+t = \frac{-B \pm \sqrt{B^2 - 4AC}}{2A}
+\end{align*}
+}
+\end{framed}
+\begin{framed}
+\noindent {\bf [2 points] Cone Cap} 
+\solution{
+$y = -0.5$.
+Note that $x^2 + z^2 \leq 0.25$.
+\begin{align*}
+y &= -0.5 \\
+p_y + \vec{d}_y * t &= -0.5 \\
+t &= \frac{-0.5 - p_y}{\vec{d}_y}
+\end{align*}
+}
+\end{framed}
+
+
+\section{How to Submit}
+
+Hand in a PDF version of your solutions using the following command:
+\begin{center}
+ {\tt provide comp175 a4-alg}
+\end{center}
+.\\\\\\\\\\\\\\\\\\\\\\\\
+
+
+%\section{Illuminating Samples}
+%\begin{framed}
+%\noindent {\bf [2 points]} When you are attempting to illuminate a transformed object, you will need to know that object's normal vector in world-space. Assume you know the normal vector in object-space, $\vec{N}_{object}$. Give an equation for the normal vector in world-space, $\vec{N}_{world}$, using the object's modeling transformation $M$ and $\vec{N}_{object}$.
+%\vskip 10em
+%\end{framed}
+
+%\begin{framed}
+%\noindent {\bf [1 point]} In the lighting equation, what does $\vec{N}\cdot\vec{L}$ represent, i.e. what is equivalent to it? What is its purpose?
+%\vskip 10em
+%\end{framed}
+
+
+\end{document}  
