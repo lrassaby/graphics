@@ -171,11 +171,12 @@ void setupCamera()
 void updateCamera()
 {
 	camera->Reset();
+    Vector up = camera->GetUpVector();
 
 	Point guiEye (eyeX, eyeY, eyeZ);
 	Point guiLook(lookX, lookY, lookZ);
 	camera->SetViewAngle(viewAngle);
-	camera->Orient(guiEye, guiLook, camera->GetUpVector());
+	camera->Orient(guiEye, guiLook, up);
 	camera->RotateU(camRotU);
 	camera->RotateV(camRotV);
 	camera->RotateW(camRotW);
