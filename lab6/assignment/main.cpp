@@ -47,6 +47,8 @@ float mouseX = 0;
 float mouseY = 0;
 float mouseZ = 1.0f;
 
+double Intersect(Point eyePointP, Vector rayV, Matrix transformMatrix);
+
 /* 	======== Our Scene ========
 	We are going to create a single sphere that we load
 	=========================== */
@@ -61,6 +63,9 @@ void updateMouse(int x, int y){
     mouseY = 1.0f - (2.0f * y)/ windowYSize;
     mouseZ = 1.0f;
     std::cout << "Screen (" << x << "," << y << ") to Object (" << mouseX << "," << mouseY << ")" << std::endl;
+    Point mouse(mouseX, mouseY, mouseZ);
+    Vector ray(0, 0, -1);
+    Intersect(mouse, ray, Matrix());
 }
 
 // This function is called everytime the mouse moves
@@ -199,8 +204,8 @@ double Intersect(Point eyePointP, Vector rayV, Matrix transformMatrix) {
         return -1 * B / (2* A);
     } else {
         std::cerr << "Two intersections at " << (-1 * B + sqrt(determinant)) / (2 * A)
-                  << " and "                 << (-1 * B - sqrt(determinant)) / (2 * A);
-                  ;
+                  << " and "                 << (-1 * B - sqrt(determinant)) / (2 * A)
+                  << std::endl;
     }
 	/*
 
@@ -227,7 +232,13 @@ void drawRayFunc(float x, float y){
 		glColor3f(1,0,0);
 		glutWireCube(2.0);
         
-
+        glLineWidth(3);
+        glColor3f(0,1,0);
+        glBegin(GL_LINES);
+            glVertex3f(x, y, 50);
+            glVertex3f(x, y, -1000);
+        glEnd();
+        glLineWidth(1);
 		/*
 
 
@@ -242,6 +253,9 @@ void drawRayFunc(float x, float y){
 
 		*/
 	}
+
+
+
 }
 
 /***************************************** myGlutDisplay() *****************/
