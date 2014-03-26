@@ -56,10 +56,6 @@ public:
 	};
 
 	bool operator!= (const Point v) {
-		//if ((p[0] != v[0]) || (p[1] != v[1]) || (p[2] != v[2])) {
-		//	return 1;
-		//}
-		//return 0;
 		if ((IN_RANGE(p[0], v[0]) == false) || (IN_RANGE(p[1], v[1]) == false) || (IN_RANGE(p[2], v[2]) == false)) {
 			return true;
 		}
@@ -67,10 +63,6 @@ public:
 	};
 
 	bool operator== (const Point v) {
-		//if ((p[0] == v[0]) && (p[1] == v[1]) && (p[2] == v[2])) {
-		//	return 1;
-		//}
-		//return 0;
 		if ((IN_RANGE(p[0], v[0]) == true) && (IN_RANGE(p[1], v[1]) == true) && (IN_RANGE(p[2], v[2]) == true)) {
 			return true;
 		}
@@ -169,10 +161,6 @@ public:
 	};
 
 	bool operator!= (const Vector v) {
-		//if ((p[0] != v[0]) || (p[1] != v[1]) || (p[2] != v[2])) {
-		//	return 1;
-		//}
-		//return 0;
 		if ((IN_RANGE(p[0], v[0]) == false) || (IN_RANGE(p[1], v[1]) == false) || (IN_RANGE(p[2], v[2]) == false)) {
 			return true;
 		}
@@ -330,14 +318,6 @@ public:
 		p[8] = 0; p[9] = 0; p[10] = 1; p[11] = 0;
 		p[12] = 0; p[13] = 0; p[14] = 0; p[15] = 1;
 	}
-	/*void print() const {
-	for (int i=0; i<4; i++) {
-	for (int j=0; j<4; j++) {
-	fprintf (stderr, "%f\t", p[i*4+j]);
-	}
-	fprintf (stderr, "\n");
-	}
-	};*/
 private:
 	double p[16];
 };
