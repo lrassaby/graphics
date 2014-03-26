@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <algorithm>
 #include <GL/glui.h>
 #include "Shape.h"
 #include "Cube.h"
@@ -30,7 +31,7 @@ float lookZ = -2;
 
 /** These are GLUI control panel objects ***/
 int  main_window;
-string filenamePath = "data\\general\\test.xml";
+string filenamePath = "data/general/sphere.xml";
 GLUI_EditText* filenameTextField = NULL;
 GLubyte* pixels = NULL;
 int pixelWidth = 0, pixelHeight = 0;
@@ -44,11 +45,72 @@ Sphere* sphere = new Sphere();
 SceneParser* parser = NULL;
 Camera* camera = new Camera();
 
+
+/******************************************************/
+/* Added by Jayme and Louis */
+
+/* data types */
+struct RenderNode {
+	Matrix modelView;
+    std::vector<ScenePrimitive*> primitives;
+};
+
+/* global variables */
+std::vector<RenderNode> nodes;
+bool initialload = true;
+
 /* function signatures */
-void setupCamera();
-void updateCamera();
+Matrix calcRotate(Vector axis, double gamma);
+void flatten(SceneNode *root, Matrix modelView);
 Vector generateRay(int i, int j, Camera *camera);
 Point convertToNormalizedFilm (Point p);
+
+
+double IntersectSphere(Point eyePointP, Vector rayV) {
+    double A, B, C; 
+    Vector eyeVector = eyePointP - Point(0, 0, 0);
+
+    A = dot(rayV, rayV);
+    B = 2 * dot(eyeVector, rayV);
+    C = dot(eyeVector, eyeVector) - 1; 
+
+
+    float determinant = B * B - 4 * A * C; 
+    if (determinant < 0) {
+        std::cerr << "No intersect" << std::endl;
+        return 0;
+    } else if (determinant == 0) {
+        std::cerr << "One intersection at " << -1 * B/ (2 * A) << std::endl;
+        return -1 * B / (2* A);
+    } else {
+        std::cerr << "Two intersections at " << (-1 * B + sqrt(determinant)) / (2 * A)
+                  << " and "                 << (-1 * B - sqrt(determinant)) / (2 * A) << std::endl;
+        return std::min((-1 * B - sqrt(determinant)) / (2 * A), 
+                        (-1 * B + sqrt(determinant)) / (2 * A));
+    }
+}
+
+double Intersect(Point eyePointP, Vector rayV, ScenePrimitive *object) {
+
+    switch (object->type) {
+        case SHAPE_CUBE:
+            break;
+        case SHAPE_CYLINDER:
+            break;
+        case SHAPE_CONE:
+            break;
+        case SHAPE_SPHERE:
+            return IntersectSphere(eyePointP, rayV);
+            break;
+        default:
+            break;
+    }
+}
+
+/******************************************************/
+
+void setupCamera();
+void updateCamera();
 
 void setPixel(GLubyte* buf, int x, int y, int r, int g, int b) {
 	buf[(y*pixelWidth + x) * 3 + 0] = (GLubyte)r;
@@ -77,16 +139,29 @@ void callback_start(int id) {
 
 	cout << "(w, h): " << pixelWidth << ", " << pixelHeight << endl;
 
+	if (initialload) {
+		SceneNode *root = parser->getRootNode();
+		flatten(root, Matrix());
+		initialload = false;
+	}
+
+    Point eyePoint(0, 0, 0);
 	for (int i = 0; i < pixelWidth; i++) {
 		for (int j = 0; j < pixelHeight; j++) {
             Vector d = generateRay(i, j, camera);
-			//replace the following code
-			if ((i % 5 == 0) && (j % 5 == 0)) {
-				setPixel(pixels, i, j, 255, 0, 0);
-			}
-			else {
-				setPixel(pixels, i, j, 128, 128, 128);
-			}
+            for (int k = 0; k < nodes.size(); k++) {
+                Matrix inv_mv = invert(nodes[k].modelView);
+                Vector d_obj = inv_mv * d;
+                Point  p_obj = inv_mv * eyePoint; 
+                std::cerr << "should be for each node" << std::endl;
+                for (int l = 0; l < nodes[k].primitives.size(); l++) {
+                    float t = Intersect(p_obj, d_obj, nodes[k].primitives[l]);
+                    std::cerr << "should be for each prim, t = " << t << std::endl;
+                    if (t > 0) {
+                        setPixel(pixels, i, j, 255, 255, 255);
+                    }
+                }
+            }
 		}
 	}
 	glutPostRedisplay();
@@ -223,6 +298,9 @@ void onExit()
 
 int main(int argc, char* argv[])
 {
+    if (argc > 1) {
+        filenamePath = argv[1];
+    }
 	atexit(onExit);
 
 	/****************************************/
@@ -309,4 +387,67 @@ Vector generateRay(int i, int j, Camera *camera)
 Point convertToNormalizedFilm(Point p) 
 {
     return Point ((2 * p[X] / screenWidth) - 1, 1 - (2 * p[Y] / screenHeight), -1);
+}
+
+
+/* from Assignment 3 */
+
+/* flatten - parse SceneNode tree and flatten into a RenderNode vector */
+void flatten(SceneNode *root, Matrix modelView)
+{
+    RenderNode node;
+    Matrix transmat;
+    SceneTransformation *trans;
+    int size = root->transformations.size();
+    for (int i = 0; i < size; i++) {
+    	trans = root->transformations[i];
+    	switch (trans->type) {
+    		case TRANSFORMATION_TRANSLATE:
+    			transmat = 
+	    		Matrix(1, 0, 0, trans->translate[X],
+	    			   0, 1, 0, trans->translate[Y],
+	    			   0, 0, 1, trans->translate[Z],
+	    			   0, 0, 0, 1);
+	    		modelView = modelView * transmat;
+	    		break;
+    		case TRANSFORMATION_ROTATE:
+    			transmat = calcRotate(trans->rotate, trans->angle);
+    			modelView = modelView * transmat;
+    			break;
+    		case TRANSFORMATION_SCALE:
+	    		transmat =
+	    		Matrix(trans->scale[X], 0, 0, 0,
+	    			   0, trans->scale[Y], 0, 0,
+	    			   0, 0, trans->scale[Z], 0,
+	    			   0, 0, 0, 1);
+	    		modelView = modelView * transmat;
+    			break;
+    		case TRANSFORMATION_MATRIX:
+    			transmat = trans->matrix;
+    			modelView = modelView * transmat;
+    			break;
+    	}
+    }
+    node.primitives = root->primitives;
+    node.modelView = modelView;
+    nodes.push_back(node);
+
+    for (int i = 0; i < root->children.size(); i++) {
+        flatten(root->children[i], modelView);
+    }
+}
+
+/* calcRotate - an arbitrary rotation around origin */
+Matrix calcRotate(Vector axis, double gamma) 
+{
+    double theta = atan2(axis[Z], axis[X]);
+    double phi = -atan2(axis[Y], sqrt(axis[X] * axis[X] + axis[Z] * axis[Z]));
+    Matrix M1, M2, M3, M1_inv, M2_inv;
+    M1 = rotY_mat(theta); 
+    M2 = rotZ_mat(phi); 
+    M3 = rotX_mat(gamma);
+    M1_inv = inv_rotY_mat(theta);
+    M2_inv = inv_rotZ_mat(phi);
+
+    return M1_inv * M2_inv * M3 * M2 * M1;
 }
