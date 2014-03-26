@@ -39,6 +39,30 @@ void Camera::Orient(Point& eye, Vector& look, Vector& up) {
     w_vector = -look_vector;
 }
 
+Matrix Camera::GetInverseTransformMatrix() {
+    Matrix r(u_vector[X], u_vector[Y], u_vector[Z], 0,
+             v_vector[X], v_vector[Y], v_vector[Z], 0,
+             w_vector[X], w_vector[Y], w_vector[Z], 0,
+                       0,           0,           0, 1);
+
+    Matrix t(1, 0, 0, -eye_point[X],
+             0, 1, 0, -eye_point[Y], 
+             0, 0, 1, -eye_point[Z],
+             0, 0, 0,            1);
+
+    double theta_h = DegreetoRadian(view_angle); 
+    double far     = screen_height / (2 * tan (theta_h / 2));
+    double theta_w = 2 * atan( screen_width / (2 * far) );
+
+    Matrix s(1/(tan((theta_w) / 2) * far_plane), 0, 0, 0,
+             0,  1/(tan((theta_h)/ 2) * far_plane), 0, 0,
+             0,  0,                     1 / far_plane, 0,
+             0,  0,                                 0, 1);
+
+ 
+    return invert(t) * invert(r) * invert(s);  
+}
+
 Matrix Camera::GetProjectionMatrix() {
     double c = -near_plane / far_plane;
 	Matrix n(1, 0,          0,         0,

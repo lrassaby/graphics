@@ -16,6 +16,7 @@ class Camera {
 
         Matrix GetProjectionMatrix();
         Matrix GetModelViewMatrix();
+        Matrix GetInverseTransformMatrix();
 
         void RotateV(double angle);
         void RotateU(double angle);

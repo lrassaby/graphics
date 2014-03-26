@@ -44,8 +44,11 @@ Sphere* sphere = new Sphere();
 SceneParser* parser = NULL;
 Camera* camera = new Camera();
 
+/* function signatures */
 void setupCamera();
 void updateCamera();
+Vector generateRay(int i, int j, Camera *camera);
+Point convertToNormalizedFilm (Point p);
 
 void setPixel(GLubyte* buf, int x, int y, int r, int g, int b) {
 	buf[(y*pixelWidth + x) * 3 + 0] = (GLubyte)r;
@@ -76,6 +79,7 @@ void callback_start(int id) {
 
 	for (int i = 0; i < pixelWidth; i++) {
 		for (int j = 0; j < pixelHeight; j++) {
+            Vector d = generateRay(i, j, camera);
 			//replace the following code
 			if ((i % 5 == 0) && (j % 5 == 0)) {
 				setPixel(pixels, i, j, 255, 0, 0);
@@ -87,8 +91,6 @@ void callback_start(int id) {
 	}
 	glutPostRedisplay();
 }
-
-
 
 void callback_load(int id) {
 	char curDirName [2048];
@@ -286,5 +288,25 @@ int main(int argc, char* argv[])
 	return EXIT_SUCCESS;
 }
 
+/* Louis and Jayme's code */
 
+Vector generateRay(int i, int j, Camera *camera)
+{
+    Vector d;
+    Point p_world(i, j, -1);
+    Point eyePoint(0, 0, 0);
 
+    /* convert p_world to normalized film space */
+    Point p_camera = convertToNormalizedFilm(p_world);
+
+    /* convert p to camera space */
+    p_camera = camera->GetInverseTransformMatrix() * p_camera; 
+
+    d = (p_camera - eyePoint);
+    return normalize(d);
+}
+
+Point convertToNormalizedFilm(Point p) 
+{
+    return Point ((2 * p[X] / screenWidth) - 1, 1 - (2 * p[Y] / screenHeight), -1);
+}
