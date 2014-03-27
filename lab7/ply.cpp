@@ -86,7 +86,6 @@ void ply::reload(string _filePath){
           (including edgeList, this calls scaleAndCenter and findEdges)
       =============================================== */ 
 void ply::loadGeometry(){
-
   /* You will implement this section of code
         1. Parse the header
         2.) Update any private or helper variables in the ply.h private section
@@ -287,7 +286,24 @@ void ply::render(){
 //loads data structures so edges are known
 void ply::findEdges(){
     //edges, if you want to use this data structure
-    edgeList = new struct edge*[vertexCount];
+    edgeList = new struct edge *[vertexCount];
+    int currEdgeCount = 0;
+    bool hasFound = false;
+    for (int i = 0; i < faceCount; i++) {
+        for (int j = 0; j < faceList[i].vertexCount; j++) {
+            int v1 = faceList[i].vertexList[j];
+            int v2 = faceList[i].vertexList[(j + 1) % faceList[i].vertexCount];
+            if (v1 < v2) {
+                struct edge *iter = edgeList[v1];
+                while (iter != NULL) {
+                    if (v1 == iter->vertexes[0] && v2 == iter->vertexes[1]) {
+                    }
+                    iter = iter->next;
+                }
+            }
+
+        }
+    }
     //TODO add all the edges to the edgeList and make sure they have both faces
 }
 
