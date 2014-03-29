@@ -403,7 +403,7 @@ Matrix calcRotate(Vector axis, double gamma)
 Vector generateRay(int i, int j, Camera *camera)
 {
     Vector d;
-    Point p_world(i, j, 1);
+    Point p_world(i, j, -1);
     Point eyePoint(0, 0, 0);
 
     /* convert p_world to normalized film space */
