@@ -12,6 +12,7 @@
 #include "Sphere.h"
 #include "SceneParser.h"
 #include "Camera.h"
+#define NO_INTERSECT -1
 
 using namespace std;
 
@@ -69,7 +70,9 @@ double IntersectCube(Point eyePointP, Vector rayV);
 double IntersectCylinder(Point eyePointP, Vector rayV);
 double IntersectCone(Point eyePointP, Vector rayV);
 double IntersectSphere(Point eyePointP, Vector rayV);
-
+double minPositive(double *values, int length);
+double quadraticIntersect(double A, double B, double C);
+double sq(double a) { return a * a; }
 
 
 /******************************************************/
@@ -114,17 +117,15 @@ void callback_start(int id) {
 	for (int i = 0; i < pixelWidth; i++) {
 		for (int j = 0; j < pixelHeight; j++) {
             Vector d = generateRay(i, j, camera);
+            Vector d_world = camera->GetInverseTransformMatrix() * d;
             for (int k = 0; k < nodes.size(); k++) {
                 Matrix inv_mv = invert(nodes[k].modelView);
-                Vector d_obj = inv_mv * d;
-                //cerr << d_obj[0] << ", " << d_obj[1] << ", " << d_obj[2] << endl;
+                Vector d_obj = inv_mv * d_world;
                 Point  p_obj = inv_mv * eyePoint; 
-                cerr << "should be for each node" << std::endl;
                 for (int l = 0; l < nodes[k].primitives.size(); l++) {
                     float t = Intersect(p_obj, d_obj, nodes[k].primitives[l]);
-                    std::cerr << "should be for each prim, t = " << t << std::endl;
                     if (t > 0) {
-                        setPixel(pixels, i, j, 255, 255, 255);
+                        setPixel(pixels, i, j, 255, 0, 255);
                     }
                 }
             }
@@ -403,16 +404,13 @@ Matrix calcRotate(Vector axis, double gamma)
 Vector generateRay(int i, int j, Camera *camera)
 {
     Vector d;
-    Point p_world(i, j, -1);
+    Point p(i, j, -1);
     Point eyePoint(0, 0, 0);
 
-    /* convert p_world to normalized film space */
-    Point p_camera = convertToNormalizedFilm(p_world);
+    /* convert p to normalized film space, p_film */
+    Point p_film = convertToNormalizedFilm(p);
 
-    /* convert p to camera space */
-    p_camera = camera->GetInverseTransformMatrix() * p_camera; 
-
-    d = (p_camera - eyePoint);
+    d = (p_film  - eyePoint);
     return normalize(d);
 }
 
@@ -446,7 +444,28 @@ double Intersect(Point eyePointP, Vector rayV, ScenePrimitive *object)
 
 double IntersectCube(Point eyePointP, Vector rayV) 
 { 
-    return 0;
+    int num_faces = 6;
+    double faces[num_faces];
+
+    /* x == 0.5 plane */
+    faces[0] = (0.5 - eyePointP[X]) / rayV[X];
+
+    /* x == -0.5 plane */
+    faces[1] = (-0.5 - eyePointP[X]) / rayV[X];
+
+    /* y == 0.5 plane */
+    faces[2] = (0.5 - eyePointP[Y]) / rayV[Y];
+
+    /* y == -0.5 plane */
+    faces[3] = (-0.5 - eyePointP[Y]) / rayV[Y];
+
+    /* z == 0.5 plane */
+    faces[4] = (0.5 - eyePointP[Z]) / rayV[Z];
+
+    /* z == -0.5 plane */
+    faces[5] = (-0.5 - eyePointP[Z]) / rayV[Z];
+
+    return minPositive(faces, num_faces);
 }
 
 double IntersectCylinder(Point eyePointP, Vector rayV) 
@@ -456,29 +475,68 @@ double IntersectCylinder(Point eyePointP, Vector rayV)
 
 double IntersectCone(Point eyePointP, Vector rayV)
 {
-    return 0;
+    double t, t_body, t_base;
+    double A, B, C;
+    Point objCenter(0, 0, 0);
+    Vector eyeVector = eyePointP - objCenter;
+
+    A = sq(rayV[X]) + sq(rayV[Z]) - 0.25 * sq(rayV[Y]);
+    B = (2 * eyePointP[X] * rayV[X]) + 
+        (2 * eyePointP[Z] * rayV[Z]) - 
+        (0.5 * eyePointP[Y] * rayV[Y]) + 
+        0.25 * rayV[Y];
+    C = sq(eyePointP[X]) + sq(eyePointP[Z]) - 
+        0.25 * sq(eyePointP[Y]) + 0.25 * eyePointP[Y] - 0.0625;
+
+    t_body = quadraticIntersect(A, B, C);
+    if (rayV[Y] != 0) {
+        t_base = (-0.5 - eyePointP[Y]) / rayV[Y];
+    }
+    /* TODO: figure out which t to return... */
+    return t;
 }
 
+/* both arguments in object space */
 double IntersectSphere(Point eyePointP, Vector rayV) {
     double A, B, C; 
-    Vector eyeVector = eyePointP - Point(0, 0, 0);
+    Point objCenter(0, 0, 0);
+    Vector eyeVector = eyePointP - objCenter;
 
     A = dot(rayV, rayV);
     B = 2 * dot(eyeVector, rayV);
-    C = dot(eyeVector, eyeVector) - 1; 
+    C = dot(eyeVector, eyeVector) - 0.25; 
 
+    return quadraticIntersect(A, B, C);
 
+}
+
+double quadraticIntersect(double A, double B, double C) 
+{
     float determinant = B * B - 4 * A * C; 
     if (determinant < 0) {
         cerr << "No intersect" << endl;
-        return 0;
+        return NO_INTERSECT;
     } else if (determinant == 0) {
         cerr << "One intersection at " << -1 * B/ (2 * A) << endl;
-        return -1 * B / (2* A);
+        return -1 * B / (2 * A);
     } else {
+        double solutions[2];
+        solutions[0] = (-1 * B - sqrt(determinant)) / (2 * A);
+        solutions[1] = (-1 * B + sqrt(determinant)) / (2 * A);
+
         cerr << "Two intersections at " << (-1 * B + sqrt(determinant)) / (2 * A)
-                  << " and "                 << (-1 * B - sqrt(determinant)) / (2 * A) << endl;
-        return std::min((-1 * B - sqrt(determinant)) / (2 * A), 
-                        (-1 * B + sqrt(determinant)) / (2 * A));
+                  << " and "            << (-1 * B - sqrt(determinant)) / (2 * A) << endl;
+        return minPositive(solutions, 2);
     }
+}
+
+double minPositive(double *values, int length)
+{
+    double min_pos = NO_INTERSECT;
+    for (int i = 0; i < length; i++) {
+        if (values[i] >= 0 && (min_pos == NO_INTERSECT || values[i] < min_pos)) {
+            min_pos = values[i];
+        }
+    }
+    return min_pos;
 }
