@@ -3,6 +3,7 @@
 
 #include <math.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 const double EPSILON = 1e-30;
 #define PI 3.1415926535897932384626433832795028841971693993751058209749445923
@@ -311,6 +312,16 @@ public:
 	double& operator() (const int i, const int j) {
 		return p[j * 4 + i];
 	};
+
+    /* printing matrices */
+    void print() const{
+        for(int i=0; i<4; i++){
+            for(int j=0; j<4; j++){
+                fprintf (stderr, "%f\t", p[j*4+i]);
+            }
+            fprintf (stderr, "\n");
+        }
+    };
 
 	void init() {
 		p[0] = 1; p[1] = 0; p[2] = 0; p[3] = 0;
