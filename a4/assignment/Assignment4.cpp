@@ -64,48 +64,13 @@ Matrix calcRotate(Vector axis, double gamma);
 void flatten(SceneNode *root, Matrix modelView);
 Vector generateRay(int i, int j, Camera *camera);
 Point convertToNormalizedFilm (Point p);
+double Intersect(Point eyePointP, Vector rayV, ScenePrimitive *object);
+double IntersectCube(Point eyePointP, Vector rayV);
+double IntersectCylinder(Point eyePointP, Vector rayV);
+double IntersectCone(Point eyePointP, Vector rayV);
+double IntersectSphere(Point eyePointP, Vector rayV);
 
 
-double IntersectSphere(Point eyePointP, Vector rayV) {
-    double A, B, C; 
-    Vector eyeVector = eyePointP - Point(0, 0, 0);
-
-    A = dot(rayV, rayV);
-    B = 2 * dot(eyeVector, rayV);
-    C = dot(eyeVector, eyeVector) - 1; 
-
-
-    float determinant = B * B - 4 * A * C; 
-    if (determinant < 0) {
-        std::cerr << "No intersect" << std::endl;
-        return 0;
-    } else if (determinant == 0) {
-        std::cerr << "One intersection at " << -1 * B/ (2 * A) << std::endl;
-        return -1 * B / (2* A);
-    } else {
-        std::cerr << "Two intersections at " << (-1 * B + sqrt(determinant)) / (2 * A)
-                  << " and "                 << (-1 * B - sqrt(determinant)) / (2 * A) << std::endl;
-        return std::min((-1 * B - sqrt(determinant)) / (2 * A), 
-                        (-1 * B + sqrt(determinant)) / (2 * A));
-    }
-}
-
-double Intersect(Point eyePointP, Vector rayV, ScenePrimitive *object) {
-
-    switch (object->type) {
-        case SHAPE_CUBE:
-            break;
-        case SHAPE_CYLINDER:
-            break;
-        case SHAPE_CONE:
-            break;
-        case SHAPE_SPHERE:
-            return IntersectSphere(eyePointP, rayV);
-            break;
-        default:
-            break;
-    }
-}
 
 /******************************************************/
 
@@ -152,8 +117,9 @@ void callback_start(int id) {
             for (int k = 0; k < nodes.size(); k++) {
                 Matrix inv_mv = invert(nodes[k].modelView);
                 Vector d_obj = inv_mv * d;
+                //cerr << d_obj[0] << ", " << d_obj[1] << ", " << d_obj[2] << endl;
                 Point  p_obj = inv_mv * eyePoint; 
-                std::cerr << "should be for each node" << std::endl;
+                cerr << "should be for each node" << std::endl;
                 for (int l = 0; l < nodes[k].primitives.size(); l++) {
                     float t = Intersect(p_obj, d_obj, nodes[k].primitives[l]);
                     std::cerr << "should be for each prim, t = " << t << std::endl;
@@ -366,30 +332,6 @@ int main(int argc, char* argv[])
 	return EXIT_SUCCESS;
 }
 
-/* Louis and Jayme's code */
-
-Vector generateRay(int i, int j, Camera *camera)
-{
-    Vector d;
-    Point p_world(i, j, -1);
-    Point eyePoint(0, 0, 0);
-
-    /* convert p_world to normalized film space */
-    Point p_camera = convertToNormalizedFilm(p_world);
-
-    /* convert p to camera space */
-    p_camera = camera->GetInverseTransformMatrix() * p_camera; 
-
-    d = (p_camera - eyePoint);
-    return normalize(d);
-}
-
-Point convertToNormalizedFilm(Point p) 
-{
-    return Point ((2 * p[X] / screenWidth) - 1, 1 - (2 * p[Y] / screenHeight), -1);
-}
-
-
 /* from Assignment 3 */
 
 /* flatten - parse SceneNode tree and flatten into a RenderNode vector */
@@ -450,4 +392,93 @@ Matrix calcRotate(Vector axis, double gamma)
     M2_inv = inv_rotZ_mat(phi);
 
     return M1_inv * M2_inv * M3 * M2 * M1;
+}
+
+/*
+ ******************************************************************* 
+ *                    Louis and Jayme's Assignment 4 code 
+ *******************************************************************
+ */
+
+Vector generateRay(int i, int j, Camera *camera)
+{
+    Vector d;
+    Point p_world(i, j, 1);
+    Point eyePoint(0, 0, 0);
+
+    /* convert p_world to normalized film space */
+    Point p_camera = convertToNormalizedFilm(p_world);
+
+    /* convert p to camera space */
+    p_camera = camera->GetInverseTransformMatrix() * p_camera; 
+
+    d = (p_camera - eyePoint);
+    return normalize(d);
+}
+
+Point convertToNormalizedFilm(Point p) 
+{
+    return Point ((2 * p[X] / screenWidth) - 1, 1 - (2 * p[Y] / screenHeight), -1);
+}
+
+
+double Intersect(Point eyePointP, Vector rayV, ScenePrimitive *object)
+{
+    switch (object->type) {
+        case SHAPE_CUBE:
+            return IntersectCube(eyePointP, rayV);
+            break;
+        case SHAPE_CYLINDER:
+            return IntersectCylinder(eyePointP, rayV);
+            break;
+        case SHAPE_CONE:
+            return IntersectCone(eyePointP, rayV);
+            break;
+        case SHAPE_SPHERE:
+            return IntersectSphere(eyePointP, rayV);
+            break;
+        default:
+            cerr << "Unrecognized shape selected." << endl;
+            return -1;
+            break;
+    }
+}
+
+double IntersectCube(Point eyePointP, Vector rayV) 
+{ 
+    return 0;
+}
+
+double IntersectCylinder(Point eyePointP, Vector rayV) 
+{
+    return 0;
+}
+
+double IntersectCone(Point eyePointP, Vector rayV)
+{
+    return 0;
+}
+
+double IntersectSphere(Point eyePointP, Vector rayV) {
+    double A, B, C; 
+    Vector eyeVector = eyePointP - Point(0, 0, 0);
+
+    A = dot(rayV, rayV);
+    B = 2 * dot(eyeVector, rayV);
+    C = dot(eyeVector, eyeVector) - 1; 
+
+
+    float determinant = B * B - 4 * A * C; 
+    if (determinant < 0) {
+        cerr << "No intersect" << endl;
+        return 0;
+    } else if (determinant == 0) {
+        cerr << "One intersection at " << -1 * B/ (2 * A) << endl;
+        return -1 * B / (2* A);
+    } else {
+        cerr << "Two intersections at " << (-1 * B + sqrt(determinant)) / (2 * A)
+                  << " and "                 << (-1 * B - sqrt(determinant)) / (2 * A) << endl;
+        return std::min((-1 * B - sqrt(determinant)) / (2 * A), 
+                        (-1 * B + sqrt(determinant)) / (2 * A));
+    }
 }
