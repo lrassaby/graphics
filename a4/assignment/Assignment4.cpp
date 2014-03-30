@@ -416,7 +416,8 @@ Vector generateRay(int i, int j, Camera *camera)
 
 Point convertToNormalizedFilm(Point p) 
 {
-    return Point ((2 * p[X] / screenWidth) - 1, 1 - (2 * p[Y] / screenHeight), -1);
+    return Point ((2.0f * p[X] / screenWidth) - 1.0f, 
+                   1.0f - (2.0f * p[Y] / screenHeight), -1.0);
 }
 
 
@@ -468,33 +469,64 @@ double IntersectCube(Point eyePointP, Vector rayV)
     return minPositive(faces, num_faces);
 }
 
+#define T_BODY 0
+#define T_BOTTOM 1
+#define T_TOP 2
+
 double IntersectCylinder(Point eyePointP, Vector rayV) 
 {
-    return 0;
-}
-
-double IntersectCone(Point eyePointP, Vector rayV)
-{
-    double t, t_body, t_base;
+    double components[3];
     double A, B, C;
     Point objCenter(0, 0, 0);
     Vector eyeVector = eyePointP - objCenter;
 
     A = sq(rayV[X]) + sq(rayV[Z]) - 0.25 * sq(rayV[Y]);
-    B = (2 * eyePointP[X] * rayV[X]) + 
-        (2 * eyePointP[Z] * rayV[Z]) - 
+    B = (2.0 * eyePointP[X] * rayV[X]) + 
+        (2.0 * eyePointP[Z] * rayV[Z]) - 
         (0.5 * eyePointP[Y] * rayV[Y]) + 
         0.25 * rayV[Y];
     C = sq(eyePointP[X]) + sq(eyePointP[Z]) - 
         0.25 * sq(eyePointP[Y]) + 0.25 * eyePointP[Y] - 0.0625;
 
-    t_body = quadraticIntersect(A, B, C);
+    components[T_BODY] = quadraticIntersect(A, B, C);
     if (rayV[Y] != 0) {
-        t_base = (-0.5 - eyePointP[Y]) / rayV[Y];
+        components[T_TOP] = (0.5 - eyePointP[Y]) / rayV[Y];
+        components[T_BOTTOM] = (-0.5 - eyePointP[Y]) / rayV[Y];
     }
-    /* TODO: figure out which t to return... */
-    return t;
+    return minPositive(components, 3);
 }
+
+#undef T_BODY
+#undef T_BOTTOM
+#undef T_TOP
+
+#define T_BODY 0
+#define T_BASE 1
+
+double IntersectCone(Point eyePointP, Vector rayV)
+{
+    double components[2];
+    double A, B, C;
+    Point objCenter(0, 0, 0);
+    Vector eyeVector = eyePointP - objCenter;
+
+    A = sq(rayV[X]) + sq(rayV[Z]) - 0.25 * sq(rayV[Y]);
+    B = (2.0 * eyePointP[X] * rayV[X]) + 
+        (2.0 * eyePointP[Z] * rayV[Z]) - 
+        (0.5 * eyePointP[Y] * rayV[Y]) + 
+        0.25 * rayV[Y];
+    C = sq(eyePointP[X]) + sq(eyePointP[Z]) - 
+        0.25 * sq(eyePointP[Y]) + 0.25 * eyePointP[Y] - 0.0625;
+
+    components[T_BODY] = quadraticIntersect(A, B, C);
+    if (rayV[Y] != 0) {
+        components[T_BASE] = (-0.5 - eyePointP[Y]) / rayV[Y];
+    }
+    return minPositive(components, 2);
+}
+
+#undef T_BODY
+#undef T_BASE
 
 /* both arguments in object space */
 double IntersectSphere(Point eyePointP, Vector rayV) {
@@ -512,20 +544,20 @@ double IntersectSphere(Point eyePointP, Vector rayV) {
 
 double quadraticIntersect(double A, double B, double C) 
 {
-    float determinant = B * B - 4 * A * C; 
+    float determinant = B * B - 4.0f * A * C; 
     if (determinant < 0) {
         cerr << "No intersect" << endl;
         return NO_INTERSECT;
     } else if (determinant == 0) {
-        cerr << "One intersection at " << -1 * B/ (2 * A) << endl;
-        return -1 * B / (2 * A);
+        cerr << "One intersection at " << -1 * B/ (2.0f * A) << endl;
+        return -1 * B / (2.0f * A);
     } else {
         double solutions[2];
-        solutions[0] = (-1 * B - sqrt(determinant)) / (2 * A);
-        solutions[1] = (-1 * B + sqrt(determinant)) / (2 * A);
+        solutions[0] = (-1 * B - sqrt(determinant)) / (2.0f * A);
+        solutions[1] = (-1 * B + sqrt(determinant)) / (2.0f * A);
 
-        cerr << "Two intersections at " << (-1 * B + sqrt(determinant)) / (2 * A)
-                  << " and "            << (-1 * B - sqrt(determinant)) / (2 * A) << endl;
+        cerr << "Two intersections at " << (-1 * B + sqrt(determinant)) / (2.0f * A)
+                  << " and "            << (-1 * B - sqrt(determinant)) / (2.0f * A) << endl;
         return minPositive(solutions, 2);
     }
 }
