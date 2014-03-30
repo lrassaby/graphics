@@ -89,6 +89,27 @@ void setPixel(GLubyte* buf, int x, int y, int r, int g, int b) {
 	buf[(y*pixelWidth + x) * 3 + 2] = (GLubyte)b;
 }
 
+struct RaycastObject { /* a point on a shape */
+    double t;
+    ScenePrimitive *shape;
+    Point p_obj;
+    Vector d_obj;
+    Matrix obj_to_world;
+};
+
+enum colors {R, G, B};
+
+/* calculates intensity of a pixel based on shape and global colors */ 
+double calculateIntensity (RaycastObject *obj, int channel) {
+    /* color pixel using normals and lights */
+    double I_lambda, k_a, O_alambda, m, I_mlambda, k_d, O_dlambda;
+    Vector L_m, N;
+    int nLights;
+
+    /* for all lights */
+
+}
+
 void callback_start(int id) {
 	cout << "start button clicked!" << endl;
 
@@ -116,26 +137,48 @@ void callback_start(int id) {
 		initialload = false;
 	}
 
-    Point eyePoint(0, 0, 0);
 	for (int i = 0; i < pixelWidth; i++) {
 		for (int j = 0; j < pixelHeight; j++) {
+            std::vector<RaycastObject> t_objects;
             Vector d = generateRay(i, j, camera);
             Vector d_world = camera->GetInverseTransformMatrix() * d;
+            d_world.normalize();
             for (int k = 0; k < nodes.size(); k++) {
                 Matrix inv_mv = invert(nodes[k].modelView);
                 Vector d_obj = inv_mv * d_world;
-                Point  p_obj = inv_mv * eyePoint; 
+                Point  p_obj = inv_mv * camera->GetEyePoint(); 
                 for (int l = 0; l < nodes[k].primitives.size(); l++) {
                     float t = Intersect(p_obj, d_obj, nodes[k].primitives[l]);
                     if (t >= 0) {
-                        /* to convert to world space 
-                        Point ps_obj = p_obj + t * d_obj;
-                        Point ps_world = nodes[k].modelView * ps_obj; 
-                        */
-                        setPixel(pixels, i, j, 255, 0, 255);
+                        if (isectOnly) {
+                            setPixel(pixels, i, j, 255, 255, 255);
+                        } else { /* coloring, etc. */
+                            RaycastObject this_object;
+                            this_object.t = t;
+                            this_object.shape = nodes[k].primitives[l];
+                            this_object.d_obj = d_obj;
+                            this_object.p_obj = p_obj;
+                            this_object.obj_to_world = inv_mv;
+                            t_objects.push_back(this_object);
+                        }
                     }
                 }
             }
+            if (!isectOnly) {
+                int len = t_objects.size();
+                if (len > 0) { /* if there is an intersection */
+                    RaycastObject first_obj = t_objects[0];
+                    for (int k = 1; k < len; k++) {
+                        if (t_objects[k].t < first_obj.t) {
+                            first_obj = t_objects[k];
+                        }
+                    }
+                } /* else no intersect */
+                t_objects.clear();
+            }
+            setPixel(calculateIntensity(&first_obj, R), 
+                     calculateIntensity(&first_obj, G);
+                     calculateIntensity(&first_obj, B));
 		}
 	}
 	glutPostRedisplay();
@@ -418,13 +461,17 @@ Vector generateRay(int i, int j, Camera *camera)
     Point p_film = convertToNormalizedFilm(p);
 
     d = (p_film  - eyePoint);
-    return normalize(d);
+    return d; 
 }
 
 Point convertToNormalizedFilm(Point p) 
 {
     return Point ((2.0f * p[X] / screenWidth) - 1.0f, 
+            (2.0f * p[Y] / screenWidth) - 1.0f, -1.0);
+    /* according to slides???
+    return Point ((2.0f * p[X] / screenWidth) - 1.0f, 
                    1.0f - (2.0f * p[Y] / screenHeight), -1.0);
+    */
 }
 
 
@@ -485,7 +532,7 @@ double IntersectCube(Point eyePointP, Vector rayV)
         /* y == -0.5 plane */
         components[3] = (-0.5 - eyePointP[Y]) / rayV[Y];
         intersect = eyePointP + components[3] * rayV; 
-        if (isOutOfBounds(-0.5, 0.5, intersect[Z]) || isOutOfBounds(-0.5, 0.5, intersect[Z])) {
+        if (isOutOfBounds(-0.5, 0.5, intersect[X]) || isOutOfBounds(-0.5, 0.5, intersect[Z])) {
             components[3] = NO_INTERSECT;
         }
     } else {
@@ -612,18 +659,19 @@ double quadraticIntersect(double A, double B, double C)
 {
     float determinant = B * B - 4.0f * A * C; 
     if (determinant < 0) {
-        cerr << "No intersect" << endl;
+        //cerr << "No intersect" << endl;
         return NO_INTERSECT;
     } else if (determinant == 0) {
-        cerr << "One intersection at " << -1 * B/ (2.0f * A) << endl;
+        //cerr << "One intersection at " << -1 * B/ (2.0f * A) << endl;
         return -1 * B / (2.0f * A);
     } else {
         double solutions[2];
         solutions[0] = (-1 * B - sqrt(determinant)) / (2.0f * A);
         solutions[1] = (-1 * B + sqrt(determinant)) / (2.0f * A);
-
+/*
         cerr << "Two intersections at " << (-1 * B + sqrt(determinant)) / (2.0f * A)
                   << " and "            << (-1 * B - sqrt(determinant)) / (2.0f * A) << endl;
+                  */
         return minPositive(solutions, 2);
     }
 }
