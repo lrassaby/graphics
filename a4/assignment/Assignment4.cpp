@@ -108,19 +108,25 @@ Vector calculateNormal(RaycastObject *obj) {
 
     switch(obj->shape->type) {
         case SHAPE_CUBE:
-            if (ps_obj[X] == 0.5) { /* floating point range check */
+            if (ps_obj[X] > 0.4 && ps_obj[X] < 0.6) { /* floating point range check */
+                //cerr << "right" << endl;
                 normal = Vector(1, 0, 0);
-            } else if (ps_obj[X] == -0.5) {
+            } else if (ps_obj[X] > -0.6 && ps_obj[X] < -0.4) {
+                //cerr << "left" << endl;
                 normal = Vector(-1, 0, 0);
             }
-            if (ps_obj[Y] == 0.5) {
+            if (ps_obj[Y] > 0.4 && ps_obj[Y] < 0.6) {
+                //cerr << "top" << endl;
                 normal = Vector(0, 1, 0);
-            } else if (ps_obj[Y] == -0.5) {
+            } else if (ps_obj[Y] > -0.6 && ps_obj[Y] < -0.4) {
+                //cerr << "bottom" << endl;
                 normal = Vector(0, -1, 0);
             }
-            if (ps_obj[Z] == 0.5) {
+            if (ps_obj[Z] > 0.4 && ps_obj[Z] < 0.6) {
+                //cerr << "front" << endl;
                 normal = Vector(0, 0, 1);
-            } else if (ps_obj[Z] == -0.5) {
+            } else if (ps_obj[Z] > -0.6 && ps_obj[Z] < -0.4) {
+                //cerr << "back" << endl;
                 normal = Vector(0, 0, -1);
             }
             break;
@@ -134,8 +140,8 @@ Vector calculateNormal(RaycastObject *obj) {
             cerr << "Unrecognized shape selected." << endl;
             return Vector();
     }
-    normal.normalize();
-    normal = obj->obj_to_world * normal; /* convert to world space */
+    //normal.normalize();
+    normal = transpose(obj->obj_to_world) * normal; /* convert to world space */
     normal.normalize();
     return normal;
 }
@@ -145,7 +151,7 @@ double calculateIntensity (RaycastObject *obj, int channel) {
     /* color pixel using normals and lights */
     double I_lambda, k_a, O_alambda, I_mlambda, k_d, O_dlambda;
     Vector L_m, N;
-    int nLights, m;
+    int nLights;
     
     Point ps_obj = obj->p_obj + obj->t * obj->d_obj;
     Point ps_world = obj->obj_to_world * ps_obj;
@@ -162,17 +168,19 @@ double calculateIntensity (RaycastObject *obj, int channel) {
 
     /* calculate the rest of everything based on lights */
     I_lambda = k_a * O_alambda;
-    for (m = 0; m < nLights; m++) {
+    double sum = 0;
+    for (int m = 0; m < nLights; m++) {
         SceneLightData light_data;
         parser->getLightData(m, light_data);
         I_mlambda = light_data.color.channels[channel];
         N = calculateNormal(obj);
+        //cerr << N[X] << ", " << N[Y] << ", " << N[Z] << endl;
         L_m = ps_world - light_data.pos;
         L_m.normalize();
-        I_lambda += I_mlambda * (k_d * O_dlambda * dot(N, L_m));
+        //cerr << dot(N, L_m) << endl;
+        sum += k_d * O_dlambda * dot(N, L_m);
     }
-
-    return I_lambda;
+    return (I_lambda + sum) * 255;
 }
 
 void callback_start(int id) {
@@ -239,6 +247,7 @@ void callback_start(int id) {
                         }
                     }
                     t_objects.clear();
+
                     setPixel(pixels, i, j,
                             calculateIntensity(&first_obj, R), 
                             calculateIntensity(&first_obj, G),
@@ -532,11 +541,11 @@ Vector generateRay(int i, int j, Camera *camera)
 
 Point convertToNormalizedFilm(Point p) 
 {
-    return Point ((2.0f * p[X] / screenWidth) - 1.0f, 
-            (2.0f * p[Y] / screenWidth) - 1.0f, -1.0);
+    return Point ((2.0 * p[X] / screenWidth) - 1.0, 
+            (2.0 * p[Y] / screenWidth) - 1.0, -1.0);
     /* according to slides???
-    return Point ((2.0f * p[X] / screenWidth) - 1.0f, 
-                   1.0f - (2.0f * p[Y] / screenHeight), -1.0);
+    return Point ((2.0 * p[X] / screenWidth) - 1.0, 
+                   1.0 - (2.0 * p[Y] / screenHeight), -1.0);
     */
 }
 
@@ -723,20 +732,20 @@ double IntersectSphere(Point eyePointP, Vector rayV) {
 
 double quadraticIntersect(double A, double B, double C) 
 {
-    float determinant = B * B - 4.0f * A * C; 
+    float determinant = B * B - 4.0 * A * C; 
     if (determinant < 0) {
         //cerr << "No intersect" << endl;
         return NO_INTERSECT;
     } else if (determinant == 0) {
-        //cerr << "One intersection at " << -1 * B/ (2.0f * A) << endl;
-        return -1 * B / (2.0f * A);
+        //cerr << "One intersection at " << -1 * B/ (2.0 * A) << endl;
+        return -1 * B / (2.0 * A);
     } else {
         double solutions[2];
-        solutions[0] = (-1 * B - sqrt(determinant)) / (2.0f * A);
-        solutions[1] = (-1 * B + sqrt(determinant)) / (2.0f * A);
+        solutions[0] = (-1 * B - sqrt(determinant)) / (2.0 * A);
+        solutions[1] = (-1 * B + sqrt(determinant)) / (2.0 * A);
 /*
-        cerr << "Two intersections at " << (-1 * B + sqrt(determinant)) / (2.0f * A)
-                  << " and "            << (-1 * B - sqrt(determinant)) / (2.0f * A) << endl;
+        cerr << "Two intersections at " << (-1 * B + sqrt(determinant)) / (2.0 * A)
+                  << " and "            << (-1 * B - sqrt(determinant)) / (2.0 * A) << endl;
                   */
         return minPositive(solutions, 2);
     }
