@@ -56,6 +56,17 @@ struct RenderNode {
     std::vector<ScenePrimitive*> primitives;
 };
 
+enum colors {R, G, B};
+
+struct RaycastObject { /* a point on a shape */
+    double t;
+    ScenePrimitive *shape;
+    Point p_obj;
+    Vector d_obj;
+    Matrix obj_to_world;
+};
+
+
 /* global variables */
 std::vector<RenderNode> nodes;
 bool initialload = true;
@@ -89,25 +100,79 @@ void setPixel(GLubyte* buf, int x, int y, int r, int g, int b) {
 	buf[(y*pixelWidth + x) * 3 + 2] = (GLubyte)b;
 }
 
-struct RaycastObject { /* a point on a shape */
-    double t;
-    ScenePrimitive *shape;
-    Point p_obj;
-    Vector d_obj;
-    Matrix obj_to_world;
-};
+/* calculates normal in world space */
+Vector calculateNormal(RaycastObject *obj) {
+    /* calculate the point we're dealing with in object space */
+    Point ps_obj = obj->p_obj + obj->t * obj->d_obj;
+    Vector normal;
 
-enum colors {R, G, B};
+    switch(obj->shape->type) {
+        case SHAPE_CUBE:
+            if (ps_obj[X] == 0.5) { /* floating point range check */
+                normal = Vector(1, 0, 0);
+            } else if (ps_obj[X] == -0.5) {
+                normal = Vector(-1, 0, 0);
+            }
+            if (ps_obj[Y] == 0.5) {
+                normal = Vector(0, 1, 0);
+            } else if (ps_obj[Y] == -0.5) {
+                normal = Vector(0, -1, 0);
+            }
+            if (ps_obj[Z] == 0.5) {
+                normal = Vector(0, 0, 1);
+            } else if (ps_obj[Z] == -0.5) {
+                normal = Vector(0, 0, -1);
+            }
+            break;
+        case SHAPE_CYLINDER:
+            break;
+        case SHAPE_CONE:
+            break;
+        case SHAPE_SPHERE:
+            break;
+        default:
+            cerr << "Unrecognized shape selected." << endl;
+            return Vector();
+    }
+    normal.normalize();
+    normal = obj->obj_to_world * normal; /* convert to world space */
+    normal.normalize();
+    return normal;
+}
 
 /* calculates intensity of a pixel based on shape and global colors */ 
 double calculateIntensity (RaycastObject *obj, int channel) {
     /* color pixel using normals and lights */
-    double I_lambda, k_a, O_alambda, m, I_mlambda, k_d, O_dlambda;
+    double I_lambda, k_a, O_alambda, I_mlambda, k_d, O_dlambda;
     Vector L_m, N;
-    int nLights;
+    int nLights, m;
+    
+    Point ps_obj = obj->p_obj + obj->t * obj->d_obj;
+    Point ps_world = obj->obj_to_world * ps_obj;
 
-    /* for all lights */
+    SceneGlobalData global_data;
+    parser->getGlobalData(global_data);
 
+    /* populate variables */
+    nLights = parser->getNumLights();
+    k_a = global_data.ka;
+    k_d = global_data.kd;
+    O_alambda = obj->shape->material.cAmbient.channels[channel];
+    O_dlambda = obj->shape->material.cDiffuse.channels[channel];
+
+    /* calculate the rest of everything based on lights */
+    I_lambda = k_a * O_alambda;
+    for (m = 0; m < nLights; m++) {
+        SceneLightData light_data;
+        parser->getLightData(m, light_data);
+        I_mlambda = light_data.color.channels[channel];
+        N = calculateNormal(obj);
+        L_m = ps_world - light_data.pos;
+        L_m.normalize();
+        I_lambda += I_mlambda * (k_d * O_dlambda * dot(N, L_m));
+    }
+
+    return I_lambda;
 }
 
 void callback_start(int id) {
@@ -173,15 +238,16 @@ void callback_start(int id) {
                             first_obj = t_objects[k];
                         }
                     }
+                    t_objects.clear();
+                    setPixel(pixels, i, j,
+                            calculateIntensity(&first_obj, R), 
+                            calculateIntensity(&first_obj, G),
+                            calculateIntensity(&first_obj, B));
                 } /* else no intersect */
-                t_objects.clear();
             }
-            setPixel(calculateIntensity(&first_obj, R), 
-                     calculateIntensity(&first_obj, G);
-                     calculateIntensity(&first_obj, B));
-		}
-	}
-	glutPostRedisplay();
+        }
+    }
+    glutPostRedisplay();
 }
 
 void callback_load(int id) {
