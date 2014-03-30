@@ -73,6 +73,9 @@ double IntersectSphere(Point eyePointP, Vector rayV);
 double minPositive(double *values, int length);
 double quadraticIntersect(double A, double B, double C);
 double sq(double a) { return a * a; }
+bool isOutOfBounds(double min, double max, double tocheck) {
+    return (tocheck < min || tocheck > max);
+};
 
 
 /******************************************************/
@@ -124,7 +127,11 @@ void callback_start(int id) {
                 Point  p_obj = inv_mv * eyePoint; 
                 for (int l = 0; l < nodes[k].primitives.size(); l++) {
                     float t = Intersect(p_obj, d_obj, nodes[k].primitives[l]);
-                    if (t > 0) {
+                    if (t >= 0) {
+                        /* to convert to world space 
+                        Point ps_obj = p_obj + t * d_obj;
+                        Point ps_world = nodes[k].modelView * ps_obj; 
+                        */
                         setPixel(pixels, i, j, 255, 0, 255);
                     }
                 }
@@ -446,65 +453,115 @@ double Intersect(Point eyePointP, Vector rayV, ScenePrimitive *object)
 double IntersectCube(Point eyePointP, Vector rayV) 
 { 
     int num_faces = 6;
-    double faces[num_faces];
+    double components[num_faces];
+    Point intersect; 
+    if (rayV[X] != 0) {
+        /* x == 0.5 plane */
+        components[0] = (0.5 - eyePointP[X]) / rayV[X];
+        intersect = eyePointP + components[0] * rayV; 
+        if (isOutOfBounds(-0.5, 0.5, intersect[Y]) || isOutOfBounds(-0.5, 0.5, intersect[Z])) {
+            components[0] = NO_INTERSECT;
+        }
 
-    /* x == 0.5 plane */
-    faces[0] = (0.5 - eyePointP[X]) / rayV[X];
+        /* x == -0.5 plane */
+        components[1] = (-0.5 - eyePointP[X]) / rayV[X];
+        intersect = eyePointP + components[1] * rayV; 
+        if (isOutOfBounds(-0.5, 0.5, intersect[Y]) || isOutOfBounds(-0.5, 0.5, intersect[Z])) {
+            components[1] = NO_INTERSECT;
+        }
+    } else {
+        components[0] = NO_INTERSECT;
+        components[1] = NO_INTERSECT;
+    }
 
-    /* x == -0.5 plane */
-    faces[1] = (-0.5 - eyePointP[X]) / rayV[X];
+    if (rayV[Y] != 0) {
+        /* y == 0.5 plane */
+        components[2] = (0.5 - eyePointP[Y]) / rayV[Y];
+        intersect = eyePointP + components[2] * rayV; 
+        if (isOutOfBounds(-0.5, 0.5, intersect[X]) || isOutOfBounds(-0.5, 0.5, intersect[Z])) {
+            components[2] = NO_INTERSECT;
+        }
 
-    /* y == 0.5 plane */
-    faces[2] = (0.5 - eyePointP[Y]) / rayV[Y];
+        /* y == -0.5 plane */
+        components[3] = (-0.5 - eyePointP[Y]) / rayV[Y];
+        intersect = eyePointP + components[3] * rayV; 
+        if (isOutOfBounds(-0.5, 0.5, intersect[Z]) || isOutOfBounds(-0.5, 0.5, intersect[Z])) {
+            components[3] = NO_INTERSECT;
+        }
+    } else {
+        components[2] = NO_INTERSECT;
+        components[3] = NO_INTERSECT;
+    }
 
-    /* y == -0.5 plane */
-    faces[3] = (-0.5 - eyePointP[Y]) / rayV[Y];
+    if (rayV[Z] != 0) {
+        /* z == 0.5 plane */
+        components[4] = (0.5 - eyePointP[Z]) / rayV[Z];
+        intersect = eyePointP + components[4] * rayV; 
+        if (isOutOfBounds(-0.5, 0.5, intersect[X]) || isOutOfBounds(-0.5, 0.5, intersect[Y])) {
+            components[4] = NO_INTERSECT;
+        }
 
-    /* z == 0.5 plane */
-    faces[4] = (0.5 - eyePointP[Z]) / rayV[Z];
-
-    /* z == -0.5 plane */
-    faces[5] = (-0.5 - eyePointP[Z]) / rayV[Z];
-
-    return minPositive(faces, num_faces);
+        /* z == -0.5 plane */
+        components[5] = (-0.5 - eyePointP[Z]) / rayV[Z];
+        intersect = eyePointP + components[5] * rayV; 
+        if (isOutOfBounds(-0.5, 0.5, intersect[X]) || isOutOfBounds(-0.5, 0.5, intersect[Y])) {
+            components[5] = NO_INTERSECT;
+        }
+    } else {
+        components[4] = NO_INTERSECT;
+        components[5] = NO_INTERSECT;
+    }
+    return minPositive(components, num_faces);
 }
 
 #define T_BODY 0
 #define T_BOTTOM 1
 #define T_TOP 2
-
 double IntersectCylinder(Point eyePointP, Vector rayV) 
 {
+    Point intersect; 
     double components[3];
     double A, B, C;
     Point objCenter(0, 0, 0);
     Vector eyeVector = eyePointP - objCenter;
 
-    A = sq(rayV[X]) + sq(rayV[Z]) - 0.25 * sq(rayV[Y]);
-    B = (2.0 * eyePointP[X] * rayV[X]) + 
-        (2.0 * eyePointP[Z] * rayV[Z]) - 
-        (0.5 * eyePointP[Y] * rayV[Y]) + 
-        0.25 * rayV[Y];
-    C = sq(eyePointP[X]) + sq(eyePointP[Z]) - 
-        0.25 * sq(eyePointP[Y]) + 0.25 * eyePointP[Y] - 0.0625;
+    A = sq(rayV[X]) + sq(rayV[Z]);
+    B = 2 * (eyePointP[X] * rayV[X] + eyePointP[Z] * rayV[Z]);
+    C = sq(eyePointP[X]) + sq(eyePointP[Z]) - .25;
 
     components[T_BODY] = quadraticIntersect(A, B, C);
+    intersect = eyePointP + components[T_BODY] * rayV; 
+    if (isOutOfBounds(-0.5, 0.5, intersect[Y])) {
+        components[T_BODY] = NO_INTERSECT;
+    }
+
     if (rayV[Y] != 0) {
         components[T_TOP] = (0.5 - eyePointP[Y]) / rayV[Y];
+        intersect = eyePointP + components[T_TOP] * rayV; 
+        if (isOutOfBounds(0, 0.25, sq(intersect[X]) + sq(intersect[Z]))) {
+            components[T_TOP] = NO_INTERSECT;
+        }
         components[T_BOTTOM] = (-0.5 - eyePointP[Y]) / rayV[Y];
+        intersect = eyePointP + components[T_BOTTOM] * rayV; 
+        if (isOutOfBounds(0, 0.25, sq(intersect[X]) + sq(intersect[Z]))) {
+            components[T_BOTTOM] = NO_INTERSECT;
+        }
+    } else {
+        components[T_BOTTOM] = NO_INTERSECT;
+        components[T_TOP] = NO_INTERSECT;
     }
+
     return minPositive(components, 3);
 }
-
 #undef T_BODY
 #undef T_BOTTOM
 #undef T_TOP
 
 #define T_BODY 0
 #define T_BASE 1
-
 double IntersectCone(Point eyePointP, Vector rayV)
 {
+    Point intersect; 
     double components[2];
     double A, B, C;
     Point objCenter(0, 0, 0);
@@ -519,12 +576,21 @@ double IntersectCone(Point eyePointP, Vector rayV)
         0.25 * sq(eyePointP[Y]) + 0.25 * eyePointP[Y] - 0.0625;
 
     components[T_BODY] = quadraticIntersect(A, B, C);
+    intersect = eyePointP + components[T_BODY] * rayV; 
+    if (isOutOfBounds(-0.5, 0.5, intersect[Y])) {
+        components[T_BODY] = NO_INTERSECT;
+    }
     if (rayV[Y] != 0) {
         components[T_BASE] = (-0.5 - eyePointP[Y]) / rayV[Y];
+        intersect = eyePointP + components[T_BASE] * rayV; 
+        if (isOutOfBounds(0, 0.25, sq(intersect[X]) + sq(intersect[Z]))) {
+            components[T_BASE] = NO_INTERSECT;
+        }
+    } else {
+        components[T_BASE] = NO_INTERSECT;
     }
     return minPositive(components, 2);
 }
-
 #undef T_BODY
 #undef T_BASE
 
