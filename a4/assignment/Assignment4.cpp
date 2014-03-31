@@ -81,6 +81,7 @@ double IntersectCone(Point eyePointP, Vector rayV);
 double IntersectSphere(Point eyePointP, Vector rayV);
 double minPositive(double *values, int length);
 double quadraticIntersect(double A, double B, double C);
+double calculateIntensity (RaycastObject *obj, int channel);
 bool isOutOfBounds(double min, double max, double tocheck) {
     return (tocheck < min || tocheck > max);
 };
@@ -94,115 +95,6 @@ void setPixel(GLubyte* buf, int x, int y, int r, int g, int b) {
 	buf[(y*pixelWidth + x) * 3 + 0] = (GLubyte)r;
 	buf[(y*pixelWidth + x) * 3 + 1] = (GLubyte)g;
 	buf[(y*pixelWidth + x) * 3 + 2] = (GLubyte)b;
-}
-
-#define EPSILON 1e-4
-#define IN_RANGE(a,b)   (((a>(b-EPSILON))&&(a<(b+EPSILON)))?1:0)
-/* calculates normal in world space */
-Vector calculateNormal(RaycastObject *obj) {
-    Point ps_obj = obj->ps_obj;
-    Vector normal;
-    double x = ps_obj[X];
-    double y = ps_obj[Y];
-    double z = ps_obj[Z];
-
-    switch(obj->shape->type) {
-        case SHAPE_CUBE:
-            //cerr.precision(30);
-            //cerr << ps_obj[X] << ", " << ps_obj[Y] << ", " << ps_obj[Z] << endl;
-            if (IN_RANGE(x, 0.5)) { /* floating point range check */
-                normal = Vector(1, 0, 0);
-            } else if (IN_RANGE(x, -0.5)) {
-                normal = Vector(-1, 0, 0);
-            }
-            if (IN_RANGE(y, 0.5)) {
-                normal = Vector(0, 1, 0);
-            } else if (IN_RANGE(y, -0.5)) {
-                normal = Vector(0, -1, 0);
-            }
-            if (IN_RANGE(z, 0.5)) {
-                normal = Vector(0, 0, 1);
-            } else if (IN_RANGE(z, -0.5)) {
-                normal = Vector(0, 0, -1);
-            }
-            break;
-        case SHAPE_CYLINDER:
-            if(IN_RANGE(y, 0.5) || IN_RANGE(y, -0.5)) {
-                normal = Vector(0, y, 0);
-            } else {
-                normal = Vector(x, 0, z);
-            }
-            break;
-        case SHAPE_CONE:
-            if(IN_RANGE(y , 0.5)) {
-                normal = Vector(0, 1, 0);
-            } else if (IN_RANGE(y, -0.5) && IN_RANGE(x, 0) && IN_RANGE(z, 0)) {
-                normal = Vector(0, -1, 0);
-            } else {
-                double theta = atan(ps_obj[Z]/ps_obj[X]);
-                double length = 2/sqrt(5) + sqrt(x * x + z * z);
-                double x_normal = length * cos(theta);
-                double z_normal = length * sin(theta);
-                if (x < 0) {
-                    x_normal = -1 * x_normal;
-                    z_normal = -1 * z_normal;
-                }
-                Point a(x, y, z);
-                Point b(x_normal, y + 1/sqrt(5), z_normal);
-                normal = b - a;
-            }
-            break;
-        case SHAPE_SPHERE:
-            normal = Vector(x, y, z);
-            break;
-        default:
-            cerr << "Unrecognized shape selected." << endl;
-            return Vector();
-    }
-    normal.normalize();
-    normal = transpose(obj->obj_to_world) * normal; /* convert to world space */
-    //normal.normalize();
-    return normal;
-}
-#undef IN_RANGE
-#undef EPSILON
-
-/* calculates intensity of a pixel based on shape and global colors */ 
-double calculateIntensity (RaycastObject *obj, int channel) {
-    /* color pixel using normals and lights */
-    double I_lambda, k_a, O_alambda, I_mlambda, k_d, O_dlambda;
-    Vector L_m, N;
-    int nLights = parser->getNumLights();
-    Point ps_world = obj->obj_to_world * obj->ps_obj;
-
-    SceneGlobalData global_data;
-    parser->getGlobalData(global_data);
-
-    /* populate variables */
-    k_a = global_data.ka;
-    k_d = global_data.kd;
-    O_alambda = obj->shape->material.cAmbient.channels[channel];
-    O_dlambda = obj->shape->material.cDiffuse.channels[channel];
-
-    //cerr << "ka " << k_a << " kd " << k_d << " oalamda "<< O_alambda << " odlambda "<< O_dlambda << endl;
-
-    /* calculate the rest of everything based on lights */
-    I_lambda = k_a * O_alambda;
-    double sum = 0;
-    for (int m = 0; m < nLights; m++) {
-        SceneLightData light_data;
-        parser->getLightData(m, light_data);
-        I_mlambda = light_data.color.channels[channel];
-        N = calculateNormal(obj);
-        N = k_d * O_dlambda * N;
-        L_m = ps_world - light_data.pos;
-        L_m.normalize();
-        //cerr << dot(N, L_m) << endl;
-        sum += I_mlambda * dot(N, L_m);
-    }
-    I_lambda = (I_lambda + sum) * 255;
-    //cout << I_lambda << endl;
-    return I_lambda;
 }
 
 void callback_start(int id) {
@@ -804,4 +696,115 @@ double minPositive(double *values, int length)
         }
     }
     return min_pos;
+}
+
+
+#define EPSILON 1e-4
+#define IN_RANGE(a,b)   (((a>(b-EPSILON))&&(a<(b+EPSILON)))?1:0)
+/* calculates normal in world space */
+Vector calculateNormal(RaycastObject *obj) {
+    Point ps_obj = obj->ps_obj;
+    Vector normal;
+    double x = ps_obj[X];
+    double y = ps_obj[Y];
+    double z = ps_obj[Z];
+
+    //cerr.precision(30);
+   // cerr << ps_obj[X] << ", " << ps_obj[Y] << ", " << ps_obj[Z] << endl;
+
+    switch(obj->shape->type) {
+        case SHAPE_CUBE:
+            if (IN_RANGE(x, 0.5)) { /* floating point range check */
+                normal = Vector(1, 0, 0);
+            } else if (IN_RANGE(x, -0.5)) {
+                normal = Vector(-1, 0, 0);
+            }
+            if (IN_RANGE(y, 0.5)) {
+                normal = Vector(0, 1, 0);
+            } else if (IN_RANGE(y, -0.5)) {
+                normal = Vector(0, -1, 0);
+            }
+            if (IN_RANGE(z, 0.5)) {
+                normal = Vector(0, 0, 1);
+            } else if (IN_RANGE(z, -0.5)) {
+                normal = Vector(0, 0, -1);
+            }
+            break;
+        case SHAPE_CYLINDER:
+            if(IN_RANGE(y, 0.5) || IN_RANGE(y, -0.5)) {
+                normal = Vector(0, y, 0);
+            } else {
+                normal = Vector(x, 0, z);
+            }
+            break;
+        case SHAPE_CONE:
+            if(IN_RANGE(y , 0.5)) {
+                normal = Vector(0, 1, 0);
+            } else if (IN_RANGE(y, -0.5) && IN_RANGE(x, 0) && IN_RANGE(z, 0)) {
+                normal = Vector(0, -1, 0);
+            } else {
+                double theta = atan(ps_obj[Z]/ps_obj[X]);
+                double length = 2/sqrt(5) + sqrt(x * x + z * z);
+                double x_normal = length * cos(theta);
+                double z_normal = length * sin(theta);
+                if (x < 0) {
+                    x_normal = -1 * x_normal;
+                    z_normal = -1 * z_normal;
+                }
+                Point a(x, y, z);
+                Point b(x_normal, y + 1/sqrt(5), z_normal);
+                normal = b - a;
+            }
+            break;
+        case SHAPE_SPHERE:
+            normal = Vector(x, y, z);
+            break;
+        default:
+            cerr << "Unrecognized shape selected." << endl;
+            return Vector();
+    }
+    normal.normalize();
+    normal = transpose(obj->obj_to_world) * normal; /* convert to world space */
+    //normal.normalize();
+    return normal;
+}
+#undef IN_RANGE
+#undef EPSILON
+
+/* calculates intensity of a pixel based on shape and global colors */ 
+double calculateIntensity (RaycastObject *obj, int channel) {
+    /* color pixel using normals and lights */
+    double I_lambda, k_a, O_alambda, I_mlambda, k_d, O_dlambda;
+    Vector L_m, N;
+    int nLights = parser->getNumLights();
+    Point ps_world = obj->obj_to_world * obj->ps_obj;
+
+    SceneGlobalData global_data;
+    parser->getGlobalData(global_data);
+
+    /* populate variables */
+    k_a = global_data.ka;
+    k_d = global_data.kd;
+    O_alambda = obj->shape->material.cAmbient.channels[channel];
+    O_dlambda = obj->shape->material.cDiffuse.channels[channel];
+
+    //cerr << "ka " << k_a << " kd " << k_d << " oalamda "<< O_alambda << " odlambda "<< O_dlambda << endl;
+
+    /* calculate the rest of everything based on lights */
+    I_lambda = k_a * O_alambda;
+    double sum = 0;
+    for (int m = 0; m < nLights; m++) {
+        SceneLightData light_data;
+        parser->getLightData(m, light_data);
+        I_mlambda = light_data.color.channels[channel];
+        N = calculateNormal(obj);
+        N = k_d * O_dlambda * N;
+        L_m = ps_world - light_data.pos;
+        L_m.normalize();
+        //cerr << dot(N, L_m) << endl;
+        sum += I_mlambda * dot(N, L_m);
+    }
+    I_lambda = (I_lambda + sum) * 255;
+    //cout << I_lambda << endl;
+    return I_lambda;
 }
