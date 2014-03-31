@@ -61,11 +61,9 @@ enum colors {R, G, B};
 struct RaycastObject { /* a point on a shape */
     double t;
     ScenePrimitive *shape;
-    Point p_obj;
-    Vector d_obj;
+    Point ps_obj;
     Matrix obj_to_world;
 };
-
 
 /* global variables */
 std::vector<RenderNode> nodes;
@@ -83,11 +81,9 @@ double IntersectCone(Point eyePointP, Vector rayV);
 double IntersectSphere(Point eyePointP, Vector rayV);
 double minPositive(double *values, int length);
 double quadraticIntersect(double A, double B, double C);
-double sq(double a) { return a * a; }
 bool isOutOfBounds(double min, double max, double tocheck) {
     return (tocheck < min || tocheck > max);
 };
-
 
 /******************************************************/
 
@@ -100,27 +96,30 @@ void setPixel(GLubyte* buf, int x, int y, int r, int g, int b) {
 	buf[(y*pixelWidth + x) * 3 + 2] = (GLubyte)b;
 }
 
+#define EPSILON 1e-4
+#define IN_RANGE(a,b)   (((a>(b-EPSILON))&&(a<(b+EPSILON)))?1:0)
 /* calculates normal in world space */
 Vector calculateNormal(RaycastObject *obj) {
-    /* calculate the point we're dealing with in object space */
-    Point ps_obj = obj->p_obj + obj->t * obj->d_obj;
+    Point ps_obj = obj->ps_obj;
     Vector normal;
 
     switch(obj->shape->type) {
         case SHAPE_CUBE:
-            if (ps_obj[X] == 0.5) { /* floating point range check */
+            //cerr.precision(30);
+            //cerr << ps_obj[X] << ", " << ps_obj[Y] << ", " << ps_obj[Z] << endl;
+            if (IN_RANGE(ps_obj[X], 0.5)) { /* floating point range check */
                 normal = Vector(1, 0, 0);
-            } else if (ps_obj[X] == -0.5) {
+            } else if (IN_RANGE(ps_obj[X], -0.5)) {
                 normal = Vector(-1, 0, 0);
             }
-            if (ps_obj[Y] == 0.5) {
+            if (IN_RANGE(ps_obj[Y], 0.5)) {
                 normal = Vector(0, 1, 0);
-            } else if (ps_obj[Y] == -0.5) {
+            } else if (IN_RANGE(ps_obj[Y], -0.5)) {
                 normal = Vector(0, -1, 0);
             }
-            if (ps_obj[Z] == 0.5) {
+            if (IN_RANGE(ps_obj[Z], 0.5)) {
                 normal = Vector(0, 0, 1);
-            } else if (ps_obj[Z] == -0.5) {
+            } else if (IN_RANGE(ps_obj[Z], -0.5)) {
                 normal = Vector(0, 0, -1);
             }
             break;
@@ -135,26 +134,25 @@ Vector calculateNormal(RaycastObject *obj) {
             return Vector();
     }
     normal.normalize();
-    normal = obj->obj_to_world * normal; /* convert to world space */
+    normal = transpose(obj->obj_to_world) * normal; /* convert to world space */
     normal.normalize();
     return normal;
 }
+#undef IN_RANGE
+#undef EPSILON
 
 /* calculates intensity of a pixel based on shape and global colors */ 
 double calculateIntensity (RaycastObject *obj, int channel) {
     /* color pixel using normals and lights */
     double I_lambda, k_a, O_alambda, I_mlambda, k_d, O_dlambda;
     Vector L_m, N;
-    int nLights, m;
-    
-    Point ps_obj = obj->p_obj + obj->t * obj->d_obj;
-    Point ps_world = obj->obj_to_world * ps_obj;
+    int nLights = parser->getNumLights();
+    Point ps_world = obj->obj_to_world * obj->ps_obj;
 
     SceneGlobalData global_data;
     parser->getGlobalData(global_data);
 
     /* populate variables */
-    nLights = parser->getNumLights();
     k_a = global_data.ka;
     k_d = global_data.kd;
     O_alambda = obj->shape->material.cAmbient.channels[channel];
@@ -162,17 +160,18 @@ double calculateIntensity (RaycastObject *obj, int channel) {
 
     /* calculate the rest of everything based on lights */
     I_lambda = k_a * O_alambda;
-    for (m = 0; m < nLights; m++) {
+    double sum = 0;
+    for (int m = 0; m < nLights; m++) {
         SceneLightData light_data;
         parser->getLightData(m, light_data);
         I_mlambda = light_data.color.channels[channel];
         N = calculateNormal(obj);
         L_m = ps_world - light_data.pos;
         L_m.normalize();
-        I_lambda += I_mlambda * (k_d * O_dlambda * dot(N, L_m));
+        cerr << dot(N, L_m) << endl;
+        sum += k_d * O_dlambda * dot(N, L_m);
     }
-
-    return I_lambda;
+    return (I_lambda + sum) * 255;
 }
 
 void callback_start(int id) {
@@ -209,9 +208,9 @@ void callback_start(int id) {
             Vector d_world = camera->GetInverseTransformMatrix() * d;
             d_world.normalize();
             for (int k = 0; k < nodes.size(); k++) {
-                Matrix inv_mv = invert(nodes[k].modelView);
-                Vector d_obj = inv_mv * d_world;
-                Point  p_obj = inv_mv * camera->GetEyePoint(); 
+                Matrix object_to_world = invert(nodes[k].modelView);
+                Vector d_obj = object_to_world * d_world;
+                Point  p_obj = object_to_world * camera->GetEyePoint(); 
                 for (int l = 0; l < nodes[k].primitives.size(); l++) {
                     float t = Intersect(p_obj, d_obj, nodes[k].primitives[l]);
                     if (t >= 0) {
@@ -221,9 +220,8 @@ void callback_start(int id) {
                             RaycastObject this_object;
                             this_object.t = t;
                             this_object.shape = nodes[k].primitives[l];
-                            this_object.d_obj = d_obj;
-                            this_object.p_obj = p_obj;
-                            this_object.obj_to_world = inv_mv;
+                            this_object.ps_obj = p_obj + (t * d_obj);
+                            this_object.obj_to_world = object_to_world;
                             t_objects.push_back(this_object);
                         }
                     }
@@ -239,6 +237,7 @@ void callback_start(int id) {
                         }
                     }
                     t_objects.clear();
+
                     setPixel(pixels, i, j,
                             calculateIntensity(&first_obj, R), 
                             calculateIntensity(&first_obj, G),
@@ -260,6 +259,9 @@ void callback_load(int id) {
 	if (parser != NULL) {
 		delete parser;
 	}
+    nodes.clear();
+    initialload = true;
+
 	parser = new SceneParser (filenamePath);
 	cout << "success? " << parser->parse() << endl;
 
@@ -375,6 +377,7 @@ void onExit()
 	if (pixels != NULL) {
 		delete pixels;
 	}
+    nodes.clear();
 }
 
 /**************************************** main() ********************/
@@ -530,17 +533,20 @@ Vector generateRay(int i, int j, Camera *camera)
     return d; 
 }
 
+/*
+ * convertToNormalizedFilm - converts a point in pixel space 
+ * to a point in the normalized film space.
+ */
 Point convertToNormalizedFilm(Point p) 
 {
-    return Point ((2.0f * p[X] / screenWidth) - 1.0f, 
-            (2.0f * p[Y] / screenWidth) - 1.0f, -1.0);
-    /* according to slides???
-    return Point ((2.0f * p[X] / screenWidth) - 1.0f, 
-                   1.0f - (2.0f * p[Y] / screenHeight), -1.0);
-    */
+    return Point ((2.0 * p[X] / screenWidth) - 1.0, 
+            (2.0 * p[Y] / screenWidth) - 1.0, -1.0);
 }
 
-
+/* 
+ * Intersect - give the eyepoint, unit ray vector in object 
+ * space and the object, returns the closest intersection point, t.
+ */
 double Intersect(Point eyePointP, Vector rayV, ScenePrimitive *object)
 {
     switch (object->type) {
@@ -563,6 +569,10 @@ double Intersect(Point eyePointP, Vector rayV, ScenePrimitive *object)
     }
 }
 
+/* 
+ * IntersectCube - give the eyepoint and unit ray vector in object 
+ * space, returns the closest intersection point, t, for a cube.
+ */
 double IntersectCube(Point eyePointP, Vector rayV) 
 { 
     int num_faces = 6;
@@ -572,14 +582,15 @@ double IntersectCube(Point eyePointP, Vector rayV)
         /* x == 0.5 plane */
         components[0] = (0.5 - eyePointP[X]) / rayV[X];
         intersect = eyePointP + components[0] * rayV; 
-        if (isOutOfBounds(-0.5, 0.5, intersect[Y]) || isOutOfBounds(-0.5, 0.5, intersect[Z])) {
+        if (isOutOfBounds(-0.5, 0.5, intersect[Y]) || 
+            isOutOfBounds(-0.5, 0.5, intersect[Z])) {
             components[0] = NO_INTERSECT;
         }
-
         /* x == -0.5 plane */
         components[1] = (-0.5 - eyePointP[X]) / rayV[X];
         intersect = eyePointP + components[1] * rayV; 
-        if (isOutOfBounds(-0.5, 0.5, intersect[Y]) || isOutOfBounds(-0.5, 0.5, intersect[Z])) {
+        if (isOutOfBounds(-0.5, 0.5, intersect[Y]) || 
+            isOutOfBounds(-0.5, 0.5, intersect[Z])) {
             components[1] = NO_INTERSECT;
         }
     } else {
@@ -591,33 +602,34 @@ double IntersectCube(Point eyePointP, Vector rayV)
         /* y == 0.5 plane */
         components[2] = (0.5 - eyePointP[Y]) / rayV[Y];
         intersect = eyePointP + components[2] * rayV; 
-        if (isOutOfBounds(-0.5, 0.5, intersect[X]) || isOutOfBounds(-0.5, 0.5, intersect[Z])) {
+        if (isOutOfBounds(-0.5, 0.5, intersect[X]) || 
+            isOutOfBounds(-0.5, 0.5, intersect[Z])) {
             components[2] = NO_INTERSECT;
         }
-
         /* y == -0.5 plane */
         components[3] = (-0.5 - eyePointP[Y]) / rayV[Y];
         intersect = eyePointP + components[3] * rayV; 
-        if (isOutOfBounds(-0.5, 0.5, intersect[X]) || isOutOfBounds(-0.5, 0.5, intersect[Z])) {
+        if (isOutOfBounds(-0.5, 0.5, intersect[X]) || 
+            isOutOfBounds(-0.5, 0.5, intersect[Z])) {
             components[3] = NO_INTERSECT;
         }
     } else {
         components[2] = NO_INTERSECT;
         components[3] = NO_INTERSECT;
     }
-
     if (rayV[Z] != 0) {
         /* z == 0.5 plane */
         components[4] = (0.5 - eyePointP[Z]) / rayV[Z];
         intersect = eyePointP + components[4] * rayV; 
-        if (isOutOfBounds(-0.5, 0.5, intersect[X]) || isOutOfBounds(-0.5, 0.5, intersect[Y])) {
+        if (isOutOfBounds(-0.5, 0.5, intersect[X]) || 
+            isOutOfBounds(-0.5, 0.5, intersect[Y])) {
             components[4] = NO_INTERSECT;
         }
-
         /* z == -0.5 plane */
         components[5] = (-0.5 - eyePointP[Z]) / rayV[Z];
         intersect = eyePointP + components[5] * rayV; 
-        if (isOutOfBounds(-0.5, 0.5, intersect[X]) || isOutOfBounds(-0.5, 0.5, intersect[Y])) {
+        if (isOutOfBounds(-0.5, 0.5, intersect[X]) || 
+            isOutOfBounds(-0.5, 0.5, intersect[Y])) {
             components[5] = NO_INTERSECT;
         }
     } else {
@@ -630,6 +642,10 @@ double IntersectCube(Point eyePointP, Vector rayV)
 #define T_BODY 0
 #define T_BOTTOM 1
 #define T_TOP 2
+/* 
+ * IntersectCylinder - give the eyepoint and unit ray vector in object 
+ * space, returns the closest intersection point, t, for a cylinder.
+ */
 double IntersectCylinder(Point eyePointP, Vector rayV) 
 {
     Point intersect; 
@@ -638,9 +654,9 @@ double IntersectCylinder(Point eyePointP, Vector rayV)
     Point objCenter(0, 0, 0);
     Vector eyeVector = eyePointP - objCenter;
 
-    A = sq(rayV[X]) + sq(rayV[Z]);
+    A = SQR(rayV[X]) + SQR(rayV[Z]);
     B = 2 * (eyePointP[X] * rayV[X] + eyePointP[Z] * rayV[Z]);
-    C = sq(eyePointP[X]) + sq(eyePointP[Z]) - .25;
+    C = SQR(eyePointP[X]) + SQR(eyePointP[Z]) - .25;
 
     components[T_BODY] = quadraticIntersect(A, B, C);
     intersect = eyePointP + components[T_BODY] * rayV; 
@@ -651,12 +667,12 @@ double IntersectCylinder(Point eyePointP, Vector rayV)
     if (rayV[Y] != 0) {
         components[T_TOP] = (0.5 - eyePointP[Y]) / rayV[Y];
         intersect = eyePointP + components[T_TOP] * rayV; 
-        if (isOutOfBounds(0, 0.25, sq(intersect[X]) + sq(intersect[Z]))) {
+        if (isOutOfBounds(0, 0.25, SQR(intersect[X]) + SQR(intersect[Z]))) {
             components[T_TOP] = NO_INTERSECT;
         }
         components[T_BOTTOM] = (-0.5 - eyePointP[Y]) / rayV[Y];
         intersect = eyePointP + components[T_BOTTOM] * rayV; 
-        if (isOutOfBounds(0, 0.25, sq(intersect[X]) + sq(intersect[Z]))) {
+        if (isOutOfBounds(0, 0.25, SQR(intersect[X]) + SQR(intersect[Z]))) {
             components[T_BOTTOM] = NO_INTERSECT;
         }
     } else {
@@ -672,6 +688,10 @@ double IntersectCylinder(Point eyePointP, Vector rayV)
 
 #define T_BODY 0
 #define T_BASE 1
+/* 
+ * IntersectCone - give the eyepoint and unit ray vector in object 
+ * space, returns the closest intersection point, t, for a cone.
+ */
 double IntersectCone(Point eyePointP, Vector rayV)
 {
     Point intersect; 
@@ -680,13 +700,13 @@ double IntersectCone(Point eyePointP, Vector rayV)
     Point objCenter(0, 0, 0);
     Vector eyeVector = eyePointP - objCenter;
 
-    A = sq(rayV[X]) + sq(rayV[Z]) - 0.25 * sq(rayV[Y]);
+    A = SQR(rayV[X]) + SQR(rayV[Z]) - 0.25 * SQR(rayV[Y]);
     B = (2.0 * eyePointP[X] * rayV[X]) + 
         (2.0 * eyePointP[Z] * rayV[Z]) - 
         (0.5 * eyePointP[Y] * rayV[Y]) + 
         0.25 * rayV[Y];
-    C = sq(eyePointP[X]) + sq(eyePointP[Z]) - 
-        0.25 * sq(eyePointP[Y]) + 0.25 * eyePointP[Y] - 0.0625;
+    C = SQR(eyePointP[X]) + SQR(eyePointP[Z]) - 
+        0.25 * SQR(eyePointP[Y]) + 0.25 * eyePointP[Y] - 0.0625;
 
     components[T_BODY] = quadraticIntersect(A, B, C);
     intersect = eyePointP + components[T_BODY] * rayV; 
@@ -696,7 +716,7 @@ double IntersectCone(Point eyePointP, Vector rayV)
     if (rayV[Y] != 0) {
         components[T_BASE] = (-0.5 - eyePointP[Y]) / rayV[Y];
         intersect = eyePointP + components[T_BASE] * rayV; 
-        if (isOutOfBounds(0, 0.25, sq(intersect[X]) + sq(intersect[Z]))) {
+        if (isOutOfBounds(0, 0.25, SQR(intersect[X]) + SQR(intersect[Z]))) {
             components[T_BASE] = NO_INTERSECT;
         }
     } else {
@@ -707,7 +727,10 @@ double IntersectCone(Point eyePointP, Vector rayV)
 #undef T_BODY
 #undef T_BASE
 
-/* both arguments in object space */
+/* 
+ * IntersectSphere - give the eyepoint and unit ray vector in object 
+ * space, returns the closest intersection point, t, for a sphere.
+ */
 double IntersectSphere(Point eyePointP, Vector rayV) {
     double A, B, C; 
     Point objCenter(0, 0, 0);
@@ -721,27 +744,26 @@ double IntersectSphere(Point eyePointP, Vector rayV) {
 
 }
 
+/* 
+ * quadraticIntersect - returns the smallest positive solution to the
+ * quadradic equation, given coefficients A, B and C.
+ */
 double quadraticIntersect(double A, double B, double C) 
 {
-    float determinant = B * B - 4.0f * A * C; 
+    float determinant = B * B - 4.0 * A * C; 
     if (determinant < 0) {
-        //cerr << "No intersect" << endl;
         return NO_INTERSECT;
     } else if (determinant == 0) {
-        //cerr << "One intersection at " << -1 * B/ (2.0f * A) << endl;
-        return -1 * B / (2.0f * A);
+        return -1 * B / (2.0 * A);
     } else {
         double solutions[2];
-        solutions[0] = (-1 * B - sqrt(determinant)) / (2.0f * A);
-        solutions[1] = (-1 * B + sqrt(determinant)) / (2.0f * A);
-/*
-        cerr << "Two intersections at " << (-1 * B + sqrt(determinant)) / (2.0f * A)
-                  << " and "            << (-1 * B - sqrt(determinant)) / (2.0f * A) << endl;
-                  */
+        solutions[0] = (-1 * B - sqrt(determinant)) / (2.0 * A);
+        solutions[1] = (-1 * B + sqrt(determinant)) / (2.0 * A);
         return minPositive(solutions, 2);
     }
 }
 
+ /* minPositive - returns the least positive value from values */
 double minPositive(double *values, int length)
 {
     double min_pos = NO_INTERSECT;
