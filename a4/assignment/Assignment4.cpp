@@ -158,6 +158,8 @@ double calculateIntensity (RaycastObject *obj, int channel) {
     O_alambda = obj->shape->material.cAmbient.channels[channel];
     O_dlambda = obj->shape->material.cDiffuse.channels[channel];
 
+    //cerr << "ka " << k_a << " kd " << k_d << " oalamda "<< O_alambda << " odlambda "<< O_dlambda << endl;
+
     /* calculate the rest of everything based on lights */
     I_lambda = k_a * O_alambda;
     double sum = 0;
@@ -166,12 +168,15 @@ double calculateIntensity (RaycastObject *obj, int channel) {
         parser->getLightData(m, light_data);
         I_mlambda = light_data.color.channels[channel];
         N = calculateNormal(obj);
+        N = k_d * O_dlambda * N;
         L_m = ps_world - light_data.pos;
-        L_m.normalize();
-        cerr << dot(N, L_m) << endl;
-        sum += k_d * O_dlambda * dot(N, L_m);
+        //L_m.normalize();
+        //cerr << dot(N, L_m) << endl;
+        sum += I_mlambda * dot(N, L_m);
     }
-    return (I_lambda + sum) * 255;
+    I_lambda = (I_lambda + sum) * 255;
+    cout << I_lambda << endl;
+    return I_lambda;
 }
 
 void callback_start(int id) {
