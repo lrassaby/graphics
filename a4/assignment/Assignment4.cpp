@@ -100,6 +100,8 @@ void setPixel(GLubyte* buf, int x, int y, int r, int g, int b) {
 	buf[(y*pixelWidth + x) * 3 + 2] = (GLubyte)b;
 }
 
+#define EPSILON 1e-4
+#define IN_RANGE(a,b)   (((a>(b-EPSILON))&&(a<(b+EPSILON)))?1:0)
 /* calculates normal in world space */
 Vector calculateNormal(RaycastObject *obj) {
     /* calculate the point we're dealing with in object space */
@@ -108,25 +110,21 @@ Vector calculateNormal(RaycastObject *obj) {
 
     switch(obj->shape->type) {
         case SHAPE_CUBE:
-            if (ps_obj[X] > 0.4 && ps_obj[X] < 0.6) { /* floating point range check */
-                //cerr << "right" << endl;
+            //cerr.precision(30);
+            //cerr << ps_obj[X] << ", " << ps_obj[Y] << ", " << ps_obj[Z] << endl;
+            if (IN_RANGE(ps_obj[X], 0.5)) { /* floating point range check */
                 normal = Vector(1, 0, 0);
-            } else if (ps_obj[X] > -0.6 && ps_obj[X] < -0.4) {
-                //cerr << "left" << endl;
+            } else if (IN_RANGE(ps_obj[X], -0.5)) {
                 normal = Vector(-1, 0, 0);
             }
-            if (ps_obj[Y] > 0.4 && ps_obj[Y] < 0.6) {
-                //cerr << "top" << endl;
+            if (IN_RANGE(ps_obj[Y], 0.5)) {
                 normal = Vector(0, 1, 0);
-            } else if (ps_obj[Y] > -0.6 && ps_obj[Y] < -0.4) {
-                //cerr << "bottom" << endl;
+            } else if (IN_RANGE(ps_obj[Y], -0.5)) {
                 normal = Vector(0, -1, 0);
             }
-            if (ps_obj[Z] > 0.4 && ps_obj[Z] < 0.6) {
-                //cerr << "front" << endl;
+            if (IN_RANGE(ps_obj[Z], 0.5)) {
                 normal = Vector(0, 0, 1);
-            } else if (ps_obj[Z] > -0.6 && ps_obj[Z] < -0.4) {
-                //cerr << "back" << endl;
+            } else if (IN_RANGE(ps_obj[Z], -0.5)) {
                 normal = Vector(0, 0, -1);
             }
             break;
@@ -140,11 +138,13 @@ Vector calculateNormal(RaycastObject *obj) {
             cerr << "Unrecognized shape selected." << endl;
             return Vector();
     }
-    //normal.normalize();
+    normal.normalize();
     normal = transpose(obj->obj_to_world) * normal; /* convert to world space */
     normal.normalize();
     return normal;
 }
+#undef IN_RANGE
+#undef EPSILON
 
 /* calculates intensity of a pixel based on shape and global colors */ 
 double calculateIntensity (RaycastObject *obj, int channel) {
