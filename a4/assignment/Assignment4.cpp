@@ -63,7 +63,8 @@ struct RaycastObject { /* a point on a shape */
     double t;
     ScenePrimitive *shape;
     Point ps_obj;
-    Matrix obj_to_world;
+    Matrix object_to_world;
+    Matrix world_to_object;
 };
 
 /* global variables */
@@ -132,9 +133,9 @@ void callback_start(int id) {
             Vector d_world = camera->GetInverseTransformMatrix() * d;
             d_world.normalize();
             for (int k = 0; k < nodes.size(); k++) {
-                Matrix object_to_world = invert(nodes[k].modelView);
-                Vector d_obj = object_to_world * d_world;
-                Point  p_obj = object_to_world * camera->GetEyePoint(); 
+                Matrix world_to_object = invert(nodes[k].modelView);
+                Vector d_obj = world_to_object * d_world;
+                Point  p_obj = world_to_object * camera->GetEyePoint(); 
                 for (int l = 0; l < nodes[k].primitives.size(); l++) {
                     float t = Intersect(p_obj, d_obj, nodes[k].primitives[l]);
                     if (t >= 0) {
@@ -145,7 +146,8 @@ void callback_start(int id) {
                             this_object.t = t;
                             this_object.shape = nodes[k].primitives[l];
                             this_object.ps_obj = p_obj + (t * d_obj);
-                            this_object.obj_to_world = object_to_world;
+                            this_object.object_to_world = nodes[k].modelView; 
+                            this_object.world_to_object = world_to_object;
                             t_objects.push_back(this_object);
                         }
                     }
@@ -710,8 +712,6 @@ Vector calculateNormal(RaycastObject *obj) {
     double y = ps_obj[Y];
     double z = ps_obj[Z];
 
-    //cerr.precision(30);
-   // cerr << ps_obj[X] << ", " << ps_obj[Y] << ", " << ps_obj[Z] << endl;
 
     switch(obj->shape->type) {
         case SHAPE_CUBE:
@@ -765,7 +765,8 @@ Vector calculateNormal(RaycastObject *obj) {
             return Vector();
     }
     normal.normalize();
-    normal = transpose(obj->obj_to_world) * normal; /* convert to world space */
+    normal = transpose(obj->world_to_object) * normal; /* convert to world space */
+    
     normal.normalize();
     return normal;
 }
@@ -778,7 +779,7 @@ double calculateIntensity (RaycastObject *obj, int channel) {
     double I_lambda, k_a, O_alambda, l_mlambda, k_d, O_dlambda;
     Vector L_m, N;
     int nLights = parser->getNumLights();
-    Point ps_world = obj->obj_to_world * obj->ps_obj;
+    Point ps_world = obj->object_to_world * obj->ps_obj;
 
     SceneGlobalData global_data;
     parser->getGlobalData(global_data);
@@ -790,18 +791,25 @@ double calculateIntensity (RaycastObject *obj, int channel) {
     O_dlambda = obj->shape->material.cDiffuse.channels[channel];
     N = calculateNormal(obj);
 
-    //cerr << "ka " << k_a << " kd " << k_d << " oalamda "<< O_alambda << " odlambda "<< O_dlambda << endl;
 
     /* calculate the rest of everything based on lights */
-    I_lambda = k_a * O_alambda;
+    double sum = 0;
     for (int m = 0; m < nLights; m++) {
         SceneLightData light_data;
         parser->getLightData(m, light_data);
         l_mlambda = light_data.color.channels[channel];
-        L_m = ps_world - light_data.pos;
+        L_m = light_data.pos - ps_world;
         L_m.normalize();
-        //cerr << dot(N, L_m) << endl;
-        I_lambda += k_d * O_dlambda * l_mlambda * dot(N, L_m);
+        double dp = dot(N, L_m);
+        if (dp < 0) dp = 0;
+        sum += l_mlambda * dp;
     }
+    
+    I_lambda = k_a * O_alambda + k_d * O_dlambda * sum;
+    
+    // double scaling_factor = (I_lambda) / (I_lambda + 1);
+
+    if (I_lambda < 0) I_lambda = 0;
+    if (I_lambda > 1) I_lambda = 1;
     return I_lambda;
 }
