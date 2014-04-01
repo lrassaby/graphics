@@ -766,6 +766,9 @@ Vector calculateNormal(RaycastObject *obj) {
     }
     normal.normalize();
     normal = transpose(obj->world_to_object) * normal; /* convert to world space */
+    if (dot(normal, normal) > 1) {
+        normal.normalize();
+    }
     return normal;
 }
 #undef IN_RANGE
