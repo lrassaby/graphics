@@ -13,6 +13,7 @@
 #include "SceneParser.h"
 #include "Camera.h"
 #define NO_INTERSECT -1
+#define DENOMINATOR 255
 
 using namespace std;
 
@@ -32,7 +33,7 @@ float lookZ = -2;
 
 /** These are GLUI control panel objects ***/
 int  main_window;
-string filenamePath = "data/general/sphere.xml";
+string filenamePath = "/Users/louisrassaby/Dropbox/classes/comp175/part2/a4/assignment/data/general/ball.xml";
 GLUI_EditText* filenameTextField = NULL;
 GLubyte* pixels = NULL;
 int pixelWidth = 0, pixelHeight = 0;
@@ -162,9 +163,9 @@ void callback_start(int id) {
                     t_objects.clear();
 
                     setPixel(pixels, i, j,
-                            calculateIntensity(&first_obj, R), 
-                            calculateIntensity(&first_obj, G),
-                            calculateIntensity(&first_obj, B));
+                            calculateIntensity(&first_obj, R) * DENOMINATOR, 
+                            calculateIntensity(&first_obj, G) * DENOMINATOR,
+                            calculateIntensity(&first_obj, B) * DENOMINATOR);
                 } /* else no intersect */
             }
         }
@@ -765,7 +766,7 @@ Vector calculateNormal(RaycastObject *obj) {
     }
     normal.normalize();
     normal = transpose(obj->obj_to_world) * normal; /* convert to world space */
-    //normal.normalize();
+    normal.normalize();
     return normal;
 }
 #undef IN_RANGE
@@ -774,7 +775,7 @@ Vector calculateNormal(RaycastObject *obj) {
 /* calculates intensity of a pixel based on shape and global colors */ 
 double calculateIntensity (RaycastObject *obj, int channel) {
     /* color pixel using normals and lights */
-    double I_lambda, k_a, O_alambda, I_mlambda, k_d, O_dlambda;
+    double I_lambda, k_a, O_alambda, l_mlambda, k_d, O_dlambda;
     Vector L_m, N;
     int nLights = parser->getNumLights();
     Point ps_world = obj->obj_to_world * obj->ps_obj;
@@ -787,24 +788,20 @@ double calculateIntensity (RaycastObject *obj, int channel) {
     k_d = global_data.kd;
     O_alambda = obj->shape->material.cAmbient.channels[channel];
     O_dlambda = obj->shape->material.cDiffuse.channels[channel];
+    N = calculateNormal(obj);
 
     //cerr << "ka " << k_a << " kd " << k_d << " oalamda "<< O_alambda << " odlambda "<< O_dlambda << endl;
 
     /* calculate the rest of everything based on lights */
     I_lambda = k_a * O_alambda;
-    double sum = 0;
     for (int m = 0; m < nLights; m++) {
         SceneLightData light_data;
         parser->getLightData(m, light_data);
-        I_mlambda = light_data.color.channels[channel];
-        N = calculateNormal(obj);
-        N = k_d * O_dlambda * N;
+        l_mlambda = light_data.color.channels[channel];
         L_m = ps_world - light_data.pos;
         L_m.normalize();
         //cerr << dot(N, L_m) << endl;
-        sum += I_mlambda * dot(N, L_m);
+        I_lambda += k_d * O_dlambda * l_mlambda * dot(N, L_m);
     }
-    I_lambda = (I_lambda + sum) * 255;
-    //cout << I_lambda << endl;
     return I_lambda;
 }
