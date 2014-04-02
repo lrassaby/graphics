@@ -284,27 +284,48 @@ void ply::render(){
 
 
 //loads data structures so edges are known
-void ply::findEdges(){
+void ply::findEdges()
+{
     //edges, if you want to use this data structure
     edgeList = new struct edge *[vertexCount];
-    int currEdgeCount = 0;
-    bool hasFound = false;
     for (int i = 0; i < faceCount; i++) {
         for (int j = 0; j < faceList[i].vertexCount; j++) {
             int v1 = faceList[i].vertexList[j];
             int v2 = faceList[i].vertexList[(j + 1) % faceList[i].vertexCount];
+            int low_index, high_index;
             if (v1 < v2) {
-                struct edge *iter = edgeList[v1];
-                while (iter != NULL) {
-                    if (v1 == iter->vertexes[0] && v2 == iter->vertexes[1]) {
-                    }
-                    iter = iter->next;
+                low_index = v1;
+                high_index = v2;
+            } else {
+                low_index = v2;
+                high_index = v1;
+            }
+            /* check to see if edge is already added for a previous face */
+            bool updated = false;
+            struct edge *iter = edgeList[low_index], *prev = NULL;
+            while (iter != NULL) {
+                if (low_index == iter->vertexes[0] && high_index == iter->vertexes[1]) {
+                    iter->faces[1] = i;
+                    updated = true;
+                    break;
+                } 
+                prev = iter;
+                iter = iter->next;
+            }
+            if (!updated){ 
+                struct edge *toAdd = new struct edge;
+                toAdd->vertexes[0] = low_index;
+                toAdd->vertexes[1] = high_index;
+                toAdd->faces[0] = i;
+                toAdd->next = NULL;
+                if (prev == NULL) {
+                    edgeList[low_index] = toAdd;
+                } else {
+                    prev->next = toAdd;
                 }
             }
-
         }
     }
-    //TODO add all the edges to the edgeList and make sure they have both faces
 }
 
 /* Desc: Renders the silhouette
@@ -315,8 +336,25 @@ void ply::renderSilhouette(){
     glBegin(GL_LINES);
     
     int i;
-    for(i=0; i<faceCount; i++){
+    for(int i = 0; i < faceCount; i++) {
         faceList[i].dotProd = (faceList[i].normX * lookX) + (faceList[i].normZ * lookZ);
+    }
+    for (int i = 0; i < vertexCount; i++) {
+        struct edge *iter = edgeList[i];
+        while (iter != NULL) {
+            double dot_1 = faceList[iter->faces[0]].dotProd;
+            double dot_2 = faceList[iter->faces[1]].dotProd;
+            vertex v_1 = vertexList[iter->vertexes[0]];
+            vertex v_2 = vertexList[iter->vertexes[1]];
+//            cerr << dot_1 << " " << dot_2 << endl;
+            if ((dot_1 < 0 && dot_2 > 0) || (dot_1 > 0 && dot_2 < 0)) {
+                /* draw the edge */
+                glVertex3f(v_1.x, v_1.y, v_1.z);
+                glVertex3f(v_2.x, v_2.y, v_2.z);
+            }
+
+            iter = iter->next;
+        }
     }
     
     //TODO Iterate through the edgeList, and if you want to draw an edge,
