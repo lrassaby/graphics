@@ -160,19 +160,15 @@ void myGlutMotion(int x, int y )
 
     switch (handle_state){
         case NO_STATE:
-            std::cerr << "no state" << std::endl;
             break;
         case X_AXIS: 
-            myObject->tx -= (mouseY - oldMouseY)/30;
-            std::cerr << "x axis" << std::endl;
+            myObject->tx -= (mouseY - oldMouseY)/40;
             break;
         case Y_AXIS: 
             myObject->ty -= (mouseY - oldMouseY)/100;
-            std::cerr << "y axis" << std::endl;
             break;
         case Z_AXIS: 
             myObject->tz += (mouseX - oldMouseX)/100;
-            std::cerr << "z axis" << std::endl;
             break;
         default:
             break;
@@ -475,7 +471,6 @@ void objectSelection(){
     // Read this:
     // https://www.opengl.org/sdk/docs/man2/xhtml/glReadPixels.xml
     glReadPixels(mouseX,viewport[3]-mouseY,1,1,GL_RGB,GL_UNSIGNED_BYTE,(void *)pixel);
-    std::cerr << update_handle << std::endl;
 
     if (update_handle || handle_state == NO_STATE) {
         /* red == x axis */
