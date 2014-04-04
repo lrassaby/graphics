@@ -13,6 +13,7 @@
 \usepackage{hyperref}
 \usepackage{framed}
 \usepackage{algorithmic}
+\usepackage{mathtools}
 
 \definecolor{light-gray}{gray}{0.45}
 \definecolor{Blue}{rgb}{.2, 0,.5}
@@ -113,19 +114,39 @@ Ray tracing is a global illumination algorithm. In addition to an object's inher
 
 \begin{framed}
 \noindent{\bf[2 points]} Recall that we can think of texture mapping in two steps. First, mapping from the object to the unit square, and second, mapping from the unit square to the texture map. Let $a$ and $b$ be the $x$ and $y$ values in the unit square that a particular point on an object gets mapped to in the first step. Note that $a$ and $b$ are calculated differently depending on the object. From here, how do you find the coordinates $(s, t)$ to look up in a texture map in terms of $a, b, u, v, w$ and $h$, where $u$ and $v$ are the number of repetitions in the $x$ and $y$ directions, respectively, $w$ is the texture width, and $h$ is the texture height?
-\solution{
-f
+\vspace{20mm}
+\solution{ \\ \\
+Solving for $s$ and $t$: \\ \\
+$s$ = $\left\lfloor(a * u * w))\right\rfloor$ mod $w$ \\
+$t$ = $\left\lfloor(b * v * h))\right\rfloor$ mod $h$ \\
 }
 \end{framed}
 \vskip 6em
 
 \begin{framed}
-\noindent{\bf[1 point]} How do you use the color from the texture map and the {\tt blend} value in the lighting equation?
+\noindent{\bf[1 point]} How do you use the color from the texture map and 
+the {\tt blend}value in the lighting equation?
+\vspace{5mm}
+\solution{ \\ \\
+	Given that the blend value is a fraction of how much the texture map should
+	contribute to a single pixel's color, \\ \\
+	pixel color = \\  \\
+	($blend$ * $texture$) + (1 - $blend$) * $light$)
+}
 \vskip 12em
 \end{framed}
 
 \begin{framed}
-\noindent{\bf[1 point]}  What is the Phong lighting model used for? What is the purpose of its exponent?
+\noindent{\bf[1 point]}  What is the Phong lighting model used for? What is the 
+purpose of its exponent?
+\solution{ \\ \\
+	The Phong lighting model is used to calculate the local illumination 
+	for a single pixel. The exponent controls the 'shininess' of the pixel,
+	the larger the exponent the more shiny and mirror-like the surface. Its
+	purpose is to control how fast the specular reflectance falls off. For 
+	larger exponents, the specular highlight will be small, i.e. fall off 
+	faster.
+}
 \vskip 12em
 \end{framed}
 
