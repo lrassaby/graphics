@@ -38,13 +38,11 @@
 %\subsection{}
 
 \begin{verbatim}
-Your Names: _____________________________
+Your Names: Jayme Woogerd
+            Louis Rassaby
 
-            _____________________________
-
-Your CS Logins: _________________________
-
-                _________________________
+Your CS Logins: jwoogerd
+                lrassa01
 \end{verbatim}
 
 \section{Instructions}
@@ -84,9 +82,11 @@ There are two modifications:
 \noindent{\bf[2 points]} Given a vector $\vec{v}$ and a surface normal $\vec{n}$, find the equation for the vector $\vec{r}$ which is the reflection of $\vec{v}$ about $\vec{n}$ (i.e. in the equal and opposite direction). Write your equation in terms of vector operations. How do you compute the color contributed by the reflected ray? Give a brief description.
 \includegraphics[width=2.8in]{reflection.png}
 \solution{
+\[ \vec{v_{||}} = (\vec{n} \cdot \vec{-v}) * \vec{n}\]
+\[ \vec{v_{\perp}} = \vec{-v} - \vec{v_{||}} \]
+\[ \vec{r} = \vec{v_{||}} + \vec{v_{\perp}} \]
+Or....
 \[ 2\vec{n} * (\vec{n} \cdot (-\vec{v})) + \vec{v} \]
-\\[5mm]
-Or, using matrices, ...
 }
 \end{framed}
 
