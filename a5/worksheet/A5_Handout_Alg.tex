@@ -82,11 +82,12 @@ There are two modifications:
 \noindent{\bf[2 points]} Given a vector $\vec{v}$ and a surface normal $\vec{n}$, find the equation for the vector $\vec{r}$ which is the reflection of $\vec{v}$ about $\vec{n}$ (i.e. in the equal and opposite direction). Write your equation in terms of vector operations. How do you compute the color contributed by the reflected ray? Give a brief description.
 \includegraphics[width=2.8in]{reflection.png}
 \solution{
+We are solving for the reflected vector, $\vec{r}$.
 \[ \vec{v_{||}} = (\vec{n} \cdot \vec{-v}) * \vec{n}\]
 \[ \vec{v_{\perp}} = \vec{-v} - \vec{v_{||}} \]
 \[ \vec{r} = \vec{v_{||}} + \vec{v_{\perp}} \]
-Or....
-\[ 2\vec{n} * (\vec{n} \cdot (-\vec{v})) + \vec{v} \]
+Or...
+\[ \vec{r} = 2\vec{n} * (\vec{n} \cdot (-\vec{v})) + \vec{v} \]
 }
 \end{framed}
 
@@ -104,14 +105,17 @@ Ray tracing is a global illumination algorithm. In addition to an object's inher
 \begin{enumerate}
 \item If it is occluded by (i.e. in the shadow of) another object relative to a light source.
 \item If the light source is directly behind the object, relative to the eyepoint.
+\item If an object has so much light in a channel that it is already fully lit and cannot be lit any more. This was particularly apparent during a4.
+\item If a light source emits a light that cannot be absorbed by the object.
 \end{enumerate}
 }
 \end{framed}
 
 \begin{framed}
-\noindent{\bf[2 points]} Recall that we can think of texture mapping in two steps. First, mapping from the object to the unit square, and second, mapping from the unit square to the texture map. Let $a$ and $b$ be the $x$ and $y$ values in the unit square that a particular point on an object gets mapped to in the first step. Note that $a$ and $b$ are calculated differently depending on the object. From here, how do you find the coordinates $(s, t)$ to look up in a texture map in terms of $a, b, u, v, w$ and $h$, where $u$ and $v$ are the number of repetitions in the $x$ and $y$
-directions, respectively, $w$ is the texture width, and $h$ is the texture height?
-\vskip 12em
+\noindent{\bf[2 points]} Recall that we can think of texture mapping in two steps. First, mapping from the object to the unit square, and second, mapping from the unit square to the texture map. Let $a$ and $b$ be the $x$ and $y$ values in the unit square that a particular point on an object gets mapped to in the first step. Note that $a$ and $b$ are calculated differently depending on the object. From here, how do you find the coordinates $(s, t)$ to look up in a texture map in terms of $a, b, u, v, w$ and $h$, where $u$ and $v$ are the number of repetitions in the $x$ and $y$ directions, respectively, $w$ is the texture width, and $h$ is the texture height?
+\solution{
+f
+}
 \end{framed}
 \vskip 6em
 
