@@ -30,6 +30,7 @@ float eyeZ = 2;
 float lookX = -2;
 float lookY = -2;
 float lookZ = -2;
+int recursive_depth = 1;
 
 /** These are GLUI control panel objects ***/
 int  main_window;
@@ -74,7 +75,7 @@ bool initialload = true;
 /* function signatures */
 Matrix calcRotate(Vector axis, double gamma);
 void flatten(SceneNode *root, Matrix modelView);
-Vector generateRay(int i, int j, Camera *camera);
+Vector generateRay(int i, int j);
 Point convertToNormalizedFilm (Point p);
 double Intersect(Point eyePointP, Vector rayV, ScenePrimitive *object);
 double IntersectCube(Point eyePointP, Vector rayV);
@@ -83,7 +84,7 @@ double IntersectCone(Point eyePointP, Vector rayV);
 double IntersectSphere(Point eyePointP, Vector rayV);
 double minPositive(double *values, int length);
 double quadraticIntersect(double A, double B, double C);
-double calculateIntensity (RaycastObject *obj, int channel);
+double calculateIntensity (RaycastObject *obj, int channel, int depth);
 bool isOutOfBounds(double min, double max, double tocheck) {
     return (tocheck < min || tocheck > max);
 };
@@ -129,7 +130,7 @@ void callback_start(int id) {
 	for (int i = 0; i < pixelWidth; i++) {
 		for (int j = 0; j < pixelHeight; j++) {
             std::vector<RaycastObject> t_objects;
-            Vector d = generateRay(i, j, camera);
+            Vector d = generateRay(i, j);
             Vector d_world = camera->GetInverseTransformMatrix() * d;
             d_world.normalize();
             for (int k = 0; k < nodes.size(); k++) {
@@ -165,9 +166,9 @@ void callback_start(int id) {
                     t_objects.clear();
 
                     setPixel(pixels, i, j,
-                            calculateIntensity(&first_obj, R) * DENOMINATOR, 
-                            calculateIntensity(&first_obj, G) * DENOMINATOR,
-                            calculateIntensity(&first_obj, B) * DENOMINATOR);
+                            calculateIntensity(&first_obj, R, recursive_depth) * DENOMINATOR, 
+                            calculateIntensity(&first_obj, G, recursive_depth) * DENOMINATOR,
+                            calculateIntensity(&first_obj, B, recursive_depth) * DENOMINATOR);
                 } /* else no intersect */
             }
         }
@@ -324,7 +325,7 @@ int main(int argc, char* argv[])
 	glutInitWindowPosition(50, 50);
 	glutInitWindowSize(500, 500);
 
-	main_window = glutCreateWindow("COMP 175 Assignment 4");
+	main_window = glutCreateWindow("COMP 175 Assignment 5");
 	glutDisplayFunc(myGlutDisplay);
 	glutReshapeFunc(myGlutReshape);
 
@@ -365,6 +366,11 @@ int main(int argc, char* argv[])
 	looky_widget->set_float_limits(-10, 10);
 	GLUI_Spinner* lookz_widget = glui->add_spinner_to_panel(camera_panel, "LookZ:", GLUI_SPINNER_FLOAT, &lookZ);
 	lookz_widget->set_float_limits(-10, 10);
+
+    GLUI_Panel *raytracer_panel = glui->add_panel("Recursive Raytracer");
+    (new GLUI_Spinner(raytracer_panel, "Recursive Depth:", &recursive_depth))
+        ->set_int_limits(1, 10);
+
 
 	glui->add_button("Quit", 0, (GLUI_Update_CB)exit);
 
@@ -446,7 +452,7 @@ Matrix calcRotate(Vector axis, double gamma)
  *******************************************************************
  */
 
-Vector generateRay(int i, int j, Camera *camera)
+Vector generateRay(int i, int j)
 {
     Vector d;
     Point p(i, j, -1);
@@ -772,13 +778,38 @@ Vector calculateNormal(RaycastObject *obj) {
 #undef IN_RANGE
 #undef EPSILON
 
+bool doesItIntersect(Vector d_world)
+{
+    /* determine intersection with any shape */
+    for (int k = 0; k < nodes.size(); k++) {
+        Matrix world_to_object = invert(nodes[k].modelView);
+        Vector d_obj = world_to_object * d_world;
+        Point  p_obj = world_to_object * camera->GetEyePoint(); 
+        for (int l = 0; l < nodes[k].primitives.size(); l++) {
+            float t = Intersect(p_obj, d_obj, nodes[k].primitives[l]);
+            if (t >= 0) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+
 /* calculates intensity of a pixel based on shape and global colors */ 
-double calculateIntensity (RaycastObject *obj, int channel) {
+double calculateIntensity (RaycastObject *obj, int channel, int depth) {
+    if (depth < 1) {
+        return 0;     
+    }
     /* color pixel using normals and lights */
-    double I_lambda, k_a, O_alambda, l_mlambda, k_d, O_dlambda;
-    Vector L_m, N;
+    double I_lambda, k_a, O_alambda, I_mlambda, k_d, O_dlambda;
+    Vector L_i, N;
     int nLights = parser->getNumLights();
     Point ps_world = obj->object_to_world * obj->ps_obj;
+
+    /* new variables for recursive raytracer */
+    double fatti = 1, k_s, O_slambda, n, O_rlambda, I_rlambda;
+    Vector R_i, V;
 
     SceneGlobalData global_data;
     parser->getGlobalData(global_data);
@@ -786,28 +817,36 @@ double calculateIntensity (RaycastObject *obj, int channel) {
     /* populate variables */
     k_a = global_data.ka;
     k_d = global_data.kd;
+    k_s = global_data.ks;
+
     O_alambda = obj->shape->material.cAmbient.channels[channel];
     O_dlambda = obj->shape->material.cDiffuse.channels[channel];
+    O_slambda = obj->shape->material.cSpecular.channels[channel];
+    O_rlambda = obj->shape->material.cReflective.channels[channel];
+
     N = calculateNormal(obj);
 
+    n = obj->shape->material.shininess;
 
     /* calculate the rest of everything based on lights */
     double sum = 0;
     for (int m = 0; m < nLights; m++) {
         SceneLightData light_data;
         parser->getLightData(m, light_data);
-        l_mlambda = light_data.color.channels[channel];
-        L_m = light_data.pos - ps_world;
-        L_m.normalize();
-        double dp = dot(N, L_m);
-        if (dp < 0) dp = 0;
-        sum += l_mlambda * dp;
-    }
-    
-    I_lambda = k_a * O_alambda + k_d * O_dlambda * sum;
-    
-    // double scaling_factor = (I_lambda) / (I_lambda + 1);
+        I_mlambda = light_data.color.channels[channel];
+        L_i = light_data.pos - ps_world;
+        L_i.normalize();
+        double n_dot_l = dot(N, L_i);
+        if (n_dot_l < 0) n_dot_l = 0;
+        double r_dot_v = dot(R_i, V);
 
+        if (!doesItIntersect(L_i)) {
+            sum += fatti * I_mlambda * (k_d * O_dlambda * n_dot_l + k_s * O_slambda * pow(r_dot_v, n));
+        }
+    }
+    I_rlambda = calculateIntensity(obj, channel, depth - 1);
+    I_lambda = k_a * O_alambda + sum; // + k_s * O_rlambda * I_rlambda;
+    
     if (I_lambda < 0) I_lambda = 0;
     if (I_lambda > 1) I_lambda = 1;
     return I_lambda;
