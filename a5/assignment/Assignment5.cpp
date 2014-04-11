@@ -64,6 +64,8 @@ struct RaycastObject { /* a point on a shape */
     double t;
     ScenePrimitive *shape;
     Point ps_obj;
+    Point ps_world;
+    Point eye_world;
     Matrix object_to_world;
     Matrix world_to_object;
 };
@@ -88,6 +90,7 @@ double calculateIntensity (RaycastObject *obj, int channel, int depth);
 bool isOutOfBounds(double min, double max, double tocheck) {
     return (tocheck < min || tocheck > max);
 };
+bool doesItIntersect(Vector d_world, Point ps_world);
 
 /******************************************************/
 
@@ -147,7 +150,9 @@ void callback_start(int id) {
                             this_object.t = t;
                             this_object.shape = nodes[k].primitives[l];
                             this_object.ps_obj = p_obj + (t * d_obj);
+                            this_object.eye_world = camera->GetEyePoint();
                             this_object.object_to_world = nodes[k].modelView; 
+                            this_object.ps_world = nodes[k].modelView * this_object.ps_obj;
                             this_object.world_to_object = world_to_object;
                             t_objects.push_back(this_object);
                         }
@@ -778,13 +783,14 @@ Vector calculateNormal(RaycastObject *obj) {
 #undef IN_RANGE
 #undef EPSILON
 
-bool doesItIntersect(Vector d_world)
+#define EPSILON 1e-5
+bool doesItIntersect(Vector d_world, Point ps_world)
 {
     /* determine intersection with any shape */
     for (int k = 0; k < nodes.size(); k++) {
         Matrix world_to_object = invert(nodes[k].modelView);
         Vector d_obj = world_to_object * d_world;
-        Point  p_obj = world_to_object * camera->GetEyePoint(); 
+        Point  p_obj = world_to_object * (ps_world + d_world * EPSILON); 
         for (int l = 0; l < nodes[k].primitives.size(); l++) {
             float t = Intersect(p_obj, d_obj, nodes[k].primitives[l]);
             if (t >= 0) {
@@ -794,7 +800,7 @@ bool doesItIntersect(Vector d_world)
     }
     return false;
 }
-
+#undef EPSILON
 
 /* calculates intensity of a pixel based on shape and global colors */ 
 double calculateIntensity (RaycastObject *obj, int channel, int depth) {
@@ -805,7 +811,6 @@ double calculateIntensity (RaycastObject *obj, int channel, int depth) {
     double I_lambda, k_a, O_alambda, I_mlambda, k_d, O_dlambda;
     Vector L_i, N;
     int nLights = parser->getNumLights();
-    Point ps_world = obj->object_to_world * obj->ps_obj;
 
     /* new variables for recursive raytracer */
     double fatti = 1, k_s, O_slambda, n, O_rlambda, I_rlambda;
@@ -825,7 +830,8 @@ double calculateIntensity (RaycastObject *obj, int channel, int depth) {
     O_rlambda = obj->shape->material.cReflective.channels[channel];
 
     N = calculateNormal(obj);
-
+    V = obj->ps_world - obj->eye_world;
+    V.normalize();
     n = obj->shape->material.shininess;
 
     /* calculate the rest of everything based on lights */
@@ -834,18 +840,23 @@ double calculateIntensity (RaycastObject *obj, int channel, int depth) {
         SceneLightData light_data;
         parser->getLightData(m, light_data);
         I_mlambda = light_data.color.channels[channel];
-        L_i = light_data.pos - ps_world;
+        L_i = light_data.pos - obj->ps_world;
         L_i.normalize();
         double n_dot_l = dot(N, L_i);
         if (n_dot_l < 0) n_dot_l = 0;
-        double r_dot_v = dot(R_i, V);
 
-        if (!doesItIntersect(L_i)) {
+        R_i = dot(N, -L_i) * 2 * N + L_i;
+        R_i.normalize();
+        double r_dot_v = dot(R_i, V);
+        // fprintf(stderr, "r dot v: %f\n", r_dot_v);
+
+        if (!doesItIntersect(L_i, obj->ps_world)) {
             sum += fatti * I_mlambda * (k_d * O_dlambda * n_dot_l + k_s * O_slambda * pow(r_dot_v, n));
-        }
+        } 
     }
+
     I_rlambda = calculateIntensity(obj, channel, depth - 1);
-    I_lambda = k_a * O_alambda + sum; // + k_s * O_rlambda * I_rlambda;
+    I_lambda = k_a * O_alambda + sum + k_s * O_rlambda * I_rlambda;
     
     if (I_lambda < 0) I_lambda = 0;
     if (I_lambda > 1) I_lambda = 1;
