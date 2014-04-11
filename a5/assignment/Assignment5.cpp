@@ -12,6 +12,7 @@
 #include "Sphere.h"
 #include "SceneParser.h"
 #include "Camera.h"
+#include "ppm.h"
 #define NO_INTERSECT -1
 #define DENOMINATOR 255
 
@@ -824,13 +825,27 @@ double calculateIntensity (RaycastObject *obj, int channel, int depth) {
     V.normalize();
     n = obj->shape->material.shininess;
 
+
+
     /* calculate the rest of everything based on lights */
     double sum = 0;
     for (int i = 0; i < nLights; i++) {
         SceneLightData light_data;
         parser->getLightData(i, light_data);
-        
-        L_i = light_data.pos - obj->ps_world;
+
+        switch(light_data.type) {
+            case LIGHT_POINT:
+                L_i = light_data.pos - obj->ps_world;
+                break;
+            case LIGHT_DIRECTIONAL:
+                L_i = -light_data.dir;
+                break;
+            case LIGHT_SPOT:
+            case LIGHT_AREA:
+            default:
+                fprintf(stderr, "Skipping a light!\n");
+                continue;
+        }
         L_i.normalize();
 
         std::vector<RaycastObject> t_objects = findIntersections(L_i, obj->ps_world);
@@ -865,7 +880,23 @@ double calculateIntensity (RaycastObject *obj, int channel, int depth) {
         I_lambda = k_a * O_alambda + sum;
     }
 
+    /* texture mapping */
+    SceneFileMap *textureMap = obj->shape->material.textureMap; 
+    if (textureMap->isUsed) {
+        double texture;
+        float blend = obj->shape->material.blend;
+        ppm *image = new ppm(textureMap->filename);
+        char *pixels = image->getPixels();
+        int height = image->getHeight();
+        int width = image->getWidth();
+        int repeatU = textureMap->repeatU;
+        int repeatV = textureMap->repeatV;
+
+
+        I_lambda = texture * blend + I_lambda * (1 - blend);
+    }
+
     if (I_lambda < 0) I_lambda = 0;
     if (I_lambda > 1) I_lambda = 1;
-    return I_lambda;
+    return I_lambda; 
 }
