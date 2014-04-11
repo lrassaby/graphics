@@ -13,7 +13,7 @@
 
 	<object type="tree" name="root">
 		<transblock>
-			<object type="primitive" name="cube" >
+			<object type="primitive" name="cone" >
 				<texture file="./data/tests/image/earth.ppm" u="1" v="1"/>
       			<blend value="0.8"/>
 				<diffuse r="1" g="0" b="0"/>

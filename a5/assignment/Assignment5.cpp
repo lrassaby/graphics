@@ -14,7 +14,7 @@
 #include "Camera.h"
 #include "ppm.h"
 #define NO_INTERSECT -1
-#define DENOMINATOR 255
+#define DENOMINATOR 255.0f
 
 using namespace std;
 
@@ -32,6 +32,8 @@ float lookX = -2;
 float lookY = -2;
 float lookZ = -2;
 int recursive_depth = 0;
+
+std::map <string, ppm*> ppm_files;
 
 /** These are GLUI control panel objects ***/
 int  main_window;
@@ -793,6 +795,101 @@ std::vector<RaycastObject> findIntersections(Vector d_world, Point origin_world)
 }
 #undef EPSILON
 
+#define EPSILON 1e-4
+#define IN_RANGE(a,b)   (((a>(b-EPSILON))&&(a<(b+EPSILON)))?1:0)
+
+double applyTexture(RaycastObject *obj, int channel)
+{
+    Point ps_obj = obj->ps_obj;
+    double x = ps_obj[X];
+    double y = ps_obj[Y];
+    double z = ps_obj[Z];
+
+    SceneFileMap *textureMap = obj->shape->material.textureMap;
+    ppm *image;
+
+    if (ppm_files[textureMap->filename]) {
+        image = ppm_files[textureMap->filename];
+    } else {
+        image = new ppm(textureMap->filename);
+        ppm_files[textureMap->filename] = image;
+    }
+
+    char *texturePixels = image->getPixels();
+    int height = image->getHeight();
+    int width = image->getWidth();
+    int repeatU = textureMap->repeatU;
+    int repeatV = textureMap->repeatV;
+
+    /* mapping to unit square */
+    double unit_point[2]; 
+    double theta, phi;
+    switch (obj->shape->type) {
+        case SHAPE_CUBE:
+            if (IN_RANGE(x, 0.5)) { /* floating point range check */
+                unit_point[X] = (1 - z) + 0.5;
+                unit_point[Y] = (1 - y) + 0.5;
+            } else if (IN_RANGE(x, -0.5)) {
+                unit_point[X] = z + 0.5;
+                unit_point[Y] = (1 - y) + 0.5;
+            }
+            if (IN_RANGE(y, 0.5)) {
+                unit_point[X] = x + 0.5;
+                unit_point[Y] = z + 0.5;
+            } else if (IN_RANGE(y, -0.5)) {
+                unit_point[X] = (1 - x) + 0.5;
+                unit_point[Y] = z + 0.5;
+            }
+            if (IN_RANGE(z, 0.5)) {
+                unit_point[X] = x + 0.5;
+                unit_point[Y] = (1 - y) + 0.5;
+            } else if (IN_RANGE(z, -0.5)) {
+                unit_point[X] = (1 - x) + 0.5;
+                unit_point[Y] = (1 - y) + 0.5;
+            }
+            break;
+        case SHAPE_CYLINDER:
+            if (IN_RANGE(y, 0.5)) {
+                unit_point[X] = x + 0.5;
+                unit_point[Y] = z + 0.5;
+            } else if (IN_RANGE(y, -0.5)) {
+                unit_point[X] = (1 - x) + 0.5;
+                unit_point[Y] = z + 0.5;
+            } else {
+                theta = atan2(z, x);
+                unit_point[X] = theta < 0 ? -theta/(2 * M_PI) : 1 - theta/(2 * M_PI);
+                unit_point[Y] = (1 - y) + 0.5;  
+            }
+            break;
+        case SHAPE_CONE:
+            if (IN_RANGE(y, -0.5)) {
+                unit_point[X] = (1 - x) + 0.5;
+                unit_point[Y] = z + 0.5;
+            } else {
+                theta = atan2(z, x);
+                unit_point[X] = theta < 0 ? -theta/(2 * M_PI) : 1 - theta/(2 * M_PI);
+                unit_point[Y] = (1 - y) + 0.5;  
+            }
+            break;
+        case SHAPE_SPHERE:
+            theta = atan2(z, x);
+            phi = asin(y / 0.5);
+            unit_point[X] = theta < 0 ? -theta/(2 * M_PI) : 1 - theta/(2 * M_PI);
+            unit_point[Y] = (1-(phi / M_PI)) + 0.5; 
+            break;
+        default:
+            return 0;
+    }
+
+    int s = ((int)(unit_point[X] * width * repeatU)) % width; 
+    int t = ((int)(unit_point[Y] * height * repeatV)) % height;
+
+    unsigned char textureval = texturePixels[(t * width + s) * 3 + channel];
+    return textureval / DENOMINATOR;
+}
+#undef IN_RANGE
+#undef EPSILON
+
 /* calculates intensity of a pixel based on shape and global colors */ 
 double calculateIntensity (RaycastObject *obj, int channel, int depth) {
     if (depth < 0) {
@@ -880,21 +977,11 @@ double calculateIntensity (RaycastObject *obj, int channel, int depth) {
         I_lambda = k_a * O_alambda + sum;
     }
 
-    /* texture mapping */
-    SceneFileMap *textureMap = obj->shape->material.textureMap; 
-    if (textureMap->isUsed) {
-        double texture;
+    if (obj->shape->material.textureMap->isUsed) {
         float blend = obj->shape->material.blend;
-        ppm *image = new ppm(textureMap->filename);
-        char *pixels = image->getPixels();
-        int height = image->getHeight();
-        int width = image->getWidth();
-        int repeatU = textureMap->repeatU;
-        int repeatV = textureMap->repeatV;
-
-
-        I_lambda = texture * blend + I_lambda * (1 - blend);
+        I_lambda = applyTexture(obj, channel) * blend + I_lambda * (1 - blend);
     }
+
 
     if (I_lambda < 0) I_lambda = 0;
     if (I_lambda > 1) I_lambda = 1;
