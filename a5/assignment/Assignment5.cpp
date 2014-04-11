@@ -30,7 +30,7 @@ float eyeZ = 2;
 float lookX = -2;
 float lookY = -2;
 float lookZ = -2;
-int recursive_depth = 1;
+int recursive_depth = 0;
 
 /** These are GLUI control panel objects ***/
 int  main_window;
@@ -355,7 +355,7 @@ int main(int argc, char* argv[])
 
     GLUI_Panel *raytracer_panel = glui->add_panel("Recursive Raytracer");
     (new GLUI_Spinner(raytracer_panel, "Recursive Depth:", &recursive_depth))
-        ->set_int_limits(1, 10);
+        ->set_int_limits(0, 10);
 
 
 	glui->add_button("Quit", 0, (GLUI_Update_CB)exit);
@@ -794,7 +794,7 @@ std::vector<RaycastObject> findIntersections(Vector d_world, Point origin_world)
 
 /* calculates intensity of a pixel based on shape and global colors */ 
 double calculateIntensity (RaycastObject *obj, int channel, int depth) {
-    if (depth < 1) {
+    if (depth < 0) {
         return 0;     
     }
     /* color pixel using normals and lights */
@@ -826,21 +826,23 @@ double calculateIntensity (RaycastObject *obj, int channel, int depth) {
 
     /* calculate the rest of everything based on lights */
     double sum = 0;
-    for (int m = 0; m < nLights; m++) {
+    for (int i = 0; i < nLights; i++) {
         SceneLightData light_data;
-        parser->getLightData(m, light_data);
-        I_mlambda = light_data.color.channels[channel];
+        parser->getLightData(i, light_data);
+        
         L_i = light_data.pos - obj->ps_world;
         L_i.normalize();
-        double n_dot_l = dot(N, L_i);
-        if (n_dot_l < 0) n_dot_l = 0;
 
-        R_i = dot(N, -L_i) * 2 * N + L_i;
-        R_i.normalize();
-        double r_dot_v = dot(R_i, V);
-        // fprintf(stderr, "r dot v: %f\n", r_dot_v);
         std::vector<RaycastObject> t_objects = findIntersections(L_i, obj->ps_world);
         if (t_objects.empty()) {
+            I_mlambda = light_data.color.channels[channel];
+            double n_dot_l = dot(N, L_i);
+            if (n_dot_l < 0) {
+               n_dot_l = 0;
+            }
+            R_i = dot(N, -L_i) * 2 * N + L_i;
+            R_i.normalize();
+            double r_dot_v = dot(R_i, V);
             sum += fatti * I_mlambda * (k_d * O_dlambda * n_dot_l + k_s * O_slambda * pow(r_dot_v, n));
         } 
         t_objects.clear();
