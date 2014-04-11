@@ -90,7 +90,7 @@ double calculateIntensity (RaycastObject *obj, int channel, int depth);
 bool isOutOfBounds(double min, double max, double tocheck) {
     return (tocheck < min || tocheck > max);
 };
-bool doesItIntersect(Vector d_world, Point ps_world);
+std::vector<RaycastObject> findIntersections(Vector d_world, Point origin_world);
 
 /******************************************************/
 
@@ -105,7 +105,6 @@ void setPixel(GLubyte* buf, int x, int y, int r, int g, int b) {
 
 void callback_start(int id) {
 	cout << "start button clicked!" << endl;
-
 	if (parser == NULL) {
 		cout << "no scene loaded yet" << endl;
 		return;
@@ -132,34 +131,16 @@ void callback_start(int id) {
 
 	for (int i = 0; i < pixelWidth; i++) {
 		for (int j = 0; j < pixelHeight; j++) {
-            std::vector<RaycastObject> t_objects;
             Vector d = generateRay(i, j);
             Vector d_world = camera->GetInverseTransformMatrix() * d;
             d_world.normalize();
-            for (int k = 0; k < nodes.size(); k++) {
-                Matrix world_to_object = invert(nodes[k].modelView);
-                Vector d_obj = world_to_object * d_world;
-                Point  p_obj = world_to_object * camera->GetEyePoint(); 
-                for (int l = 0; l < nodes[k].primitives.size(); l++) {
-                    float t = Intersect(p_obj, d_obj, nodes[k].primitives[l]);
-                    if (t >= 0) {
-                        if (isectOnly) {
-                            setPixel(pixels, i, j, 255, 255, 255);
-                        } else { /* coloring, etc. */
-                            RaycastObject this_object;
-                            this_object.t = t;
-                            this_object.shape = nodes[k].primitives[l];
-                            this_object.ps_obj = p_obj + (t * d_obj);
-                            this_object.eye_world = camera->GetEyePoint();
-                            this_object.object_to_world = nodes[k].modelView; 
-                            this_object.ps_world = nodes[k].modelView * this_object.ps_obj;
-                            this_object.world_to_object = world_to_object;
-                            t_objects.push_back(this_object);
-                        }
-                    }
+
+            std::vector<RaycastObject> t_objects = findIntersections(d_world, camera->GetEyePoint());
+            if (isectOnly) {
+                if (!t_objects.empty()) {
+                    setPixel(pixels, i, j, 255, 255, 255);
                 }
-            }
-            if (!isectOnly) {
+            } else {
                 int len = t_objects.size();
                 if (len > 0) { /* if there is an intersection */
                     RaycastObject first_obj = t_objects[0];
@@ -784,21 +765,30 @@ Vector calculateNormal(RaycastObject *obj) {
 #undef EPSILON
 
 #define EPSILON 1e-5
-bool doesItIntersect(Vector d_world, Point ps_world)
+std::vector<RaycastObject> findIntersections(Vector d_world, Point origin_world)
 {
+    std::vector<RaycastObject> t_objects;
     /* determine intersection with any shape */
     for (int k = 0; k < nodes.size(); k++) {
         Matrix world_to_object = invert(nodes[k].modelView);
         Vector d_obj = world_to_object * d_world;
-        Point  p_obj = world_to_object * (ps_world + d_world * EPSILON); 
+        Point  p_obj = world_to_object * (origin_world + d_world * EPSILON); 
         for (int l = 0; l < nodes[k].primitives.size(); l++) {
             float t = Intersect(p_obj, d_obj, nodes[k].primitives[l]);
             if (t >= 0) {
-                return true;
+                RaycastObject this_object;
+                this_object.t = t;
+                this_object.shape = nodes[k].primitives[l];
+                this_object.ps_obj = p_obj + (t * d_obj);
+                this_object.eye_world = camera->GetEyePoint();
+                this_object.object_to_world = nodes[k].modelView; 
+                this_object.ps_world = nodes[k].modelView * this_object.ps_obj;
+                this_object.world_to_object = world_to_object;
+                t_objects.push_back(this_object);
             }
         }
     }
-    return false;
+    return t_objects;
 }
 #undef EPSILON
 
@@ -849,15 +839,30 @@ double calculateIntensity (RaycastObject *obj, int channel, int depth) {
         R_i.normalize();
         double r_dot_v = dot(R_i, V);
         // fprintf(stderr, "r dot v: %f\n", r_dot_v);
-
-        if (!doesItIntersect(L_i, obj->ps_world)) {
+        std::vector<RaycastObject> t_objects = findIntersections(L_i, obj->ps_world);
+        if (t_objects.empty()) {
             sum += fatti * I_mlambda * (k_d * O_dlambda * n_dot_l + k_s * O_slambda * pow(r_dot_v, n));
         } 
+        t_objects.clear();
     }
 
-    I_rlambda = calculateIntensity(obj, channel, depth - 1);
-    I_lambda = k_a * O_alambda + sum + k_s * O_rlambda * I_rlambda;
-    
+    Vector next_ray = dot(N, -V) * 2 * N + V;
+    std::vector<RaycastObject> t_objects = findIntersections(next_ray, obj->ps_world);
+    int len = t_objects.size(); 
+    if (len > 0) { /* if there is an intersection */
+        RaycastObject first_obj = t_objects[0];
+        for (int k = 1; k < len; k++) {
+            if (t_objects[k].t < first_obj.t) {
+                first_obj = t_objects[k];
+            }
+        }
+        I_rlambda = calculateIntensity(&first_obj, channel, depth - 1);
+        t_objects.clear();
+        I_lambda = k_a * O_alambda + sum + k_s * O_rlambda * I_rlambda;
+    } else {
+        I_lambda = k_a * O_alambda + sum;
+    }
+
     if (I_lambda < 0) I_lambda = 0;
     if (I_lambda > 1) I_lambda = 1;
     return I_lambda;
