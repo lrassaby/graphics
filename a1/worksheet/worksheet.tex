@@ -1,0 +1,154 @@
+\documentclass[10pt,twocolumn]{article}
+\usepackage[margin=0.75in]{geometry}                % See geometry.pdf to learn the layout options. There are lots.
+\geometry{letterpaper}                   % ... or a4paper or a5paper or ... 
+%\usepackage[parfill]{parskip}    % Activate to begin paragraphs with an empty line rather than an indent
+\setlength{\columnsep}{1cm}
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{epstopdf}
+\usepackage{fullpage}
+\usepackage[usenames]{color}
+\usepackage{titlesec}
+\usepackage{hyperref}
+\usepackage{framed}
+\usepackage{changepage}
+\usepackage{color}
+\definecolor{Blue}{rgb}{0,0,.5}
+\newcommand{\solution}[1]{\begin{adjustwidth}{2.5em}{0pt}\textcolor{Blue}{\\{\bf Solution:} \\ #1}\\[5mm] \end{adjustwidth}}  %Solution
+
+\definecolor{light-gray}{gray}{0.45}
+\titleformat{\section}
+{\color{black}\normalfont\huge\bfseries}
+{\color{black}\thesection}{1em}{}
+
+\titleformat{\subsection}
+{\color{light-gray}\normalfont\Large\bfseries}
+{\color{light-gray}\thesubsection}{1em}{}
+
+\DeclareGraphicsRule{.tif}{png}{.png}{`convert #1 `dirname #1`/`basename #1 .tif`.png}
+
+\title{\Huge{\bf Algorithm 1: Shapes}}
+\author{Comp175: Computer Graphics -- Spring 2014}
+\date{Due:  {\bf Monday Februrary 3rd} at 11:59pm}                                           % Activate to display a given date or no date
+
+\begin{document}
+\maketitle
+\noindent Your Names: \\
+\indent Louis Rassaby\\
+\indent Marcella Hastings\\[5mm]
+\noindent Your CS Logins: \\
+\indent lrassa01 \\
+\indent mhasti01
+
+\section{Instructions}
+Complete this assignment only with your teammate. You may use a
+calculator or computer algebra system. All your answers should be given in simplest form.
+When a numerical answer is required, provide a reduced fraction (i.e. 1/3) or at least three
+decimal places (i.e. 0.333). Show all work; write your answers on this sheet. This algorithm handout is worth 3\% of your final grade for the class.
+
+
+\section{Cube}
+ {\bf [1 point]} Take a look at one face of the cube. Change the tessellation parameter. How do the number of small squares against one edge correspond to the tessellation parameter?
+\solution{
+The ``Segments-X'' parameter is the same as the number of small squares on the $X$ axis. ``Segments-Y'' has the same effect with the $Y$ axis.
+}
+{\bf [1 point]} Imagine a unit cube at the origin with tessellation parameter 2. Its front face lies in the +XY plane. What are the normal vectors that correspond with each of the eight triangles that make up this face? (Note: when asked for a normal, you should always give a normalized vector, meaning a vector of length one.)
+\solution{
+There are 9 normalized vectors, all of which have magnitude 1 and direction +z:
+\[ \begin{bmatrix} 0 \\ 0 \\ 1 \end{bmatrix} \]
+They start at the following $(x, y, z)$ points: 
+\begin{align*}
+\{\\
+& (-.5, .5, .5),
+(-.5, 0, .5),
+(-.5, -.5, .5),\\
+&(0, .5, .5),
+(0, 0, .5),
+(0, -.5, .5),\\
+&(.5, .5, .5),
+(.5, 0, .5),
+(.5, -.5 .5)\\
+\}
+\end{align*}
+}
+
+\section{Cylinder}
+{\bf [1.5 points]} The caps of the cylinder are regular polygons with $N$ sides, where $N$'s value is determined by parameter 2 ($p_2$). You will notice they are cut up like a pizza with $N$ slices, which are isosceles triangles. The vertices of the $N$-gon lie on a perfect circle. What is the equation of the circle that they lie on  in terms of the radius (0.5) and the angle $\theta$?
+\solution{
+We begin with the general polar notation equation for a circle, and plug in values.
+\begin{align*}
+r^2 - 2 r r_0 \cos{\left(\theta - \phi\right)} + r_0 ^2 &= a^2
+\end{align*}
+We have that $(r_0, \phi) = (\frac{1}{2}, \frac{\pi}{2})$, and that the radius, $a = \frac{1}{2}$. Plugging in values, this gives us
+\begin{align*}
+r^2 - r \cos\left(\theta - \frac{\pi}{2}\right) = 0
+\end{align*}
+}
+
+{\bf [1.5 points]} What is the surface normal of an arbitrary point along the barrel of the cylinder? It might be easier to think of this problem in cylindrical coordinates, and then transform your answer to cartesian after you have solved it in cylindrical coords.
+\solution {
+The normal at any point on the surface of the cylinder has the same direction as
+the vector from the core, at $(0, y, 0)$, to the point $(x, y, z)$, which can be
+described using the normalized vector 
+\[ \begin{bmatrix} 
+  \frac{x}{\sqrt{x^2+z^2}} \\ 
+  0 \\
+  \frac{y}{\sqrt{x^2+z^2}}
+\end{bmatrix} \]
+The normal starts at $(x, y, z)$ and has magnitude $1$.
+}
+
+\section{Cone}
+{\bf [1 point]} Look at the cone with Y-axis rotation = 0 degrees, and X-axis rotation = 0 degrees. How many triangles make up one of the $segmentX$ ``sides'' of the cone when $segmentY=1$? When $segmentY=2$? 3? $n$?
+\solution{
+When ``Segments Y'' $= 1$, there is 1 triangle on each ``Segment X'' face. When it's 2, there will be 3 triangles. When it's 3, there will be 5 triangles. There are $2n - 1$ triangles for $n =$ ``Segments Y''.
+}
+{\bf [1 point]} What is the surface normal at the tip of the cone? Keep in mind that a singularity does not have a normal; this implies that there will not be a unique normal at the tip of the cone. You can achieve a good shading effect by thinking of $segmentX$ vectors with their base at the tip of the cone, each pointing outward, normal from the face of the triangle assocated with it along the side of the cone. Think about how OpenGL can use this information to make a realistic point at the top of the cone, and draw a simple schematic sketch illustrating the normal for one of the triangles at the tip. (As long as it is clear that you get the idea, you will recieve full credit.)
+\solution{
+At any given point on the face of the cone, the normal will be a vector of magnitude 1 in a direction orthogonal to the plane that point is on. Since each face is made up of triangles, we can calculate normals by taking the cross product of $2$ of the vectors that constitute the triangle. At the top of the cone, it makes sense to have ``Segments X'' number of normals coming out at angles orthoganal to each triangle. 
+}
+{\bf [1 point]} Take the two dimensional line formed by the points $(0, 0.5)$ and $(0.5, -0.5)$ and find its slope $m$.
+\solution{
+\begin{align*}
+m &= \frac{rise}{run} \\
+&= \frac{-.5 - .5}{.5 - 0} \\
+&= -2
+\end{align*}
+}
+{\bf [1 point]} $-{{1}\over{m}}$ is the slope perpendicular to this line. Using this slope, we
+can find the vertical and radial/horizontal components of the normal on the cone body. The radial/horizontal component is the component in the XZ plane. What is the {\bf magnitude} of this component in a normalized normal vector?
+\solution{
+First, we solve for $\theta$. Based on the slope we were given, we get $tan \theta = - \frac{1}{m}$. We are trying to solve for the magnitude of the XZ component, which corresponds to the adjacent side $a$ in this triangle. Since we know the length of the normal (hypotenuse) is 1, we can solve for $a$: \[\cos{\theta} = \frac{a}{1} \] so we have that \[a = \cos{\left(\arctan{\left(\frac{-1}{m} \right)}\right)} \]. For $m = 2$, we have that $a = \frac{2}{\sqrt{5}}$.
+}
+
+{\bf [1 point]} The component in the $y$ direction is the vertical component. What is the {\bf magnitude} of this component in a normalized normal vector?
+\solution{
+Using the same principle as in the last problem, we get: \[o = \sin{\left(\arctan{\left(-\frac{1}{m}\right)} \right)} \]
+}
+
+\section{Sphere}
+The sphere in the demo is tesselated in the latitude/longitude manner, so the points you want to calculate are straight spherical coordinates. The two parameters can be used as $\theta$ and $\phi$, or longitude and latitude. Recall, that the conversion from spherical to Cartesian coordinates is given by
+\begin{eqnarray*}
+x & = & r * \sin{\phi} * \cos{\theta}\\
+y & = & r * \cos{\phi}\\
+z & = & r * \sin{\phi}*\sin{\theta}
+\end{eqnarray*}
+{\bf [1 point]} What is the surface normal of the sphere at an arbitrary surface point $(x,y,z)$?
+\solution{
+This is a vector of magnitude 1, beginning at point $(x, y, z)$. It also has direction $(x, y, z)$ because the sphere is centered around the origin.\\[5mm]
+The vector can be described as follows
+\[ \begin{bmatrix} 
+  \frac{x}{x^2+y^2+z^2} \\ 
+  \frac{y}{x^2+y^2+z^2} \\
+  \frac{z}{x^2+y^2+z^2} 
+\end{bmatrix} \]
+}
+
+\section{How to Submit}
+
+Hand in a PDF version of your solutions using the following command:
+\begin{center}
+ {\tt provide comp175 a1-alg}
+ \end{center}
+\end{document}  

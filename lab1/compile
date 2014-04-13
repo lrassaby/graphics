@@ -1,0 +1,1 @@
+g++ -Wall -Wextra main.cpp ply.cpp entity.cpp -L/usr/local/Cellar/glui/2.36/lib -I/usr/local/Cellar/glui/2.36/include -framework OpenGL -framework GLUT -lglui -o ply
