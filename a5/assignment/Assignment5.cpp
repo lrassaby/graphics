@@ -194,10 +194,8 @@ void myGlutIdle(void)
 	it if necessary */
 	if (glutGetWindow() != main_window)
 		glutSetWindow(main_window);
-
 	glutPostRedisplay();
 }
-
 
 /**************************************** myGlutReshape() *************/
 

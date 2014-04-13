@@ -1,4 +1,4 @@
-CC= g++
+CC= clang++
 
 LCFLAGS_QUIET= -w -O2
 LCFLAGS_VERBOSE= -g -Wall -Wextra
