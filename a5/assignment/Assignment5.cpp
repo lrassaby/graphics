@@ -13,8 +13,11 @@
 #include "SceneParser.h"
 #include "Camera.h"
 #include "ppm.h"
+#include <pthread.h>
 #define NO_INTERSECT -1
 #define DENOMINATOR 255.0f
+
+typedef void *thread_process(void*);
 
 using namespace std;
 
@@ -76,6 +79,7 @@ struct RaycastObject { /* a point on a shape */
 /* global variables */
 std::vector<RenderNode> nodes;
 bool initialload = true;
+pthread_mutex_t fileread = PTHREAD_MUTEX_INITIALIZER;
 
 /* function signatures */
 Matrix calcRotate(Vector axis, double gamma);
@@ -93,6 +97,7 @@ double calculateIntensity (RaycastObject *obj, int channel, int depth);
 bool isOutOfBounds(double min, double max, double tocheck) {
     return (tocheck < min || tocheck > max);
 };
+void *drawColumn(void *col);
 std::vector<RaycastObject> findIntersections(Vector d_world, Point origin_world);
 
 /******************************************************/
@@ -132,37 +137,51 @@ void callback_start(int id) {
 		initialload = false;
 	}
 
+    pthread_t *column_thread = new pthread_t[pixelWidth];
 	for (int i = 0; i < pixelWidth; i++) {
-		for (int j = 0; j < pixelHeight; j++) {
-            Vector d = generateRay(i, j);
-            Vector d_world = camera->GetInverseTransformMatrix() * d;
-            d_world.normalize();
+        pthread_create(&(column_thread[i]), NULL, drawColumn, (void *)(uintptr_t) i);
+        pthread_detach(column_thread[i]);
+    }
+/*
+    for (int i = 0; i < pixelWidth; i++) {
+        pthread_join(column_thread[i], NULL);
+    }
+    */
+    glutPostRedisplay();
+}
 
-            std::vector<RaycastObject> t_objects = findIntersections(d_world, camera->GetEyePoint());
-            if (isectOnly) {
-                if (!t_objects.empty()) {
-                    setPixel(pixels, i, j, 255, 255, 255);
-                }
-            } else {
-                int len = t_objects.size();
-                if (len > 0) { /* if there is an intersection */
-                    RaycastObject first_obj = t_objects[0];
-                    for (int k = 1; k < len; k++) {
-                        if (t_objects[k].t < first_obj.t) {
-                            first_obj = t_objects[k];
-                        }
-                    }
-                    t_objects.clear();
+void* drawColumn(void *col) 
+{
+    int i = (long long unsigned) col;
+    for (int j = 0; j < pixelHeight; j++) {
+        Vector d = generateRay(i, j);
+        Vector d_world = camera->GetInverseTransformMatrix() * d;
+        d_world.normalize();
 
-                    setPixel(pixels, i, j,
-                            calculateIntensity(&first_obj, R, recursive_depth) * DENOMINATOR, 
-                            calculateIntensity(&first_obj, G, recursive_depth) * DENOMINATOR,
-                            calculateIntensity(&first_obj, B, recursive_depth) * DENOMINATOR);
-                } /* else no intersect */
+        std::vector<RaycastObject> t_objects = findIntersections(d_world, camera->GetEyePoint());
+        if (isectOnly) {
+            if (!t_objects.empty()) {
+                setPixel(pixels, i, j, 255, 255, 255);
             }
+        } else {
+            int len = t_objects.size();
+            if (len > 0) { /* if there is an intersection */
+                RaycastObject first_obj = t_objects[0];
+                for (int k = 1; k < len; k++) {
+                    if (t_objects[k].t < first_obj.t) {
+                        first_obj = t_objects[k];
+                    }
+                }
+                t_objects.clear();
+
+                setPixel(pixels, i, j,
+                        calculateIntensity(&first_obj, R, recursive_depth) * DENOMINATOR, 
+                        calculateIntensity(&first_obj, G, recursive_depth) * DENOMINATOR,
+                        calculateIntensity(&first_obj, B, recursive_depth) * DENOMINATOR);
+            } /* else no intersect */
         }
     }
-    glutPostRedisplay();
+    return NULL;
 }
 
 void callback_load(int id) {
@@ -806,12 +825,19 @@ double applyTexture(RaycastObject *obj, int channel)
     SceneFileMap *textureMap = obj->shape->material.textureMap;
     ppm *image;
 
+
+
+    
+    pthread_mutex_lock(&fileread);
     if (ppm_files[textureMap->filename]) {
+
         image = ppm_files[textureMap->filename];
     } else {
         image = new ppm(textureMap->filename);
         ppm_files[textureMap->filename] = image;
     }
+    pthread_mutex_unlock(&fileread);
+    
 
     char *texturePixels = image->getPixels();
     int height = image->getHeight();
