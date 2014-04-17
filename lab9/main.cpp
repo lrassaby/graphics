@@ -14,6 +14,7 @@
 #include <iostream>
 #include <fstream>
 // You may need to include glee.h here if you are having problems
+#include "glee.h"
 #include <GL/glui.h>
 #include <math.h>
 #include "shaderManager.h"
