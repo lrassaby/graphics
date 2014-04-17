@@ -106,9 +106,9 @@ void draw_grid(){
 
 // Draw a triangle that represents the light source
 void drawLightSource(){
-	xLightPos += 0.001f;
+	xLightPos += 0.01f;
 	yLightPos = 0.5;
-	zLightPos += 0.001f;
+	zLightPos += 0.01f;
 
 	// Actual values that we calculate and send to the shader
 	float xLightValue = sin(xLightPos);
@@ -119,6 +119,7 @@ void drawLightSource(){
 	// the '3f' at the end means 'lightVector' is a vector of floats
 	glUniform3f(glGetUniformLocation(myShaderManager->program,"lightVector"),xLightValue,yLightValue,zLighValue);
 
+	glUseProgram(0);
 	glPushMatrix();
 		glTranslatef(xLightValue,yLightValue,zLighValue);
 		glColor3f(0.7,0.7,0);
@@ -129,6 +130,7 @@ void drawLightSource(){
 			glVertex3f(.1,.1,0);
 		glEnd();
 	glPopMatrix();
+	glUseProgram(myShaderManager->program);
 }
 
 
