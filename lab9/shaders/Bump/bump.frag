@@ -1,11 +1,8 @@
 //fragment shader, create a file for it named fragment.frag
 #version 120
 
-// TODO Step 0: Pass in 3 uniform variables
-// Make sure they are named exactly as they are in the cpp file
-// images are of type 'uniform sampler2D' and then the texture name.
-
-
+uniform sampler2D "brick.ppm"
+uniform sampler2D "bump.ppm"
 
 void main()
 {
@@ -19,6 +16,7 @@ void main()
 	// TODO Step 3:
 	// Find the final color
 
+	gl_frag_color = vec4(1.0, 0, 0, 0);
 }
 
 
