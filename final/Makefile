@@ -10,7 +10,7 @@ MCFRAME = -framework OpenGL -framework GLUT -framework GLUI
 
 TARGET = run
 
-CFILES = Assignment5.cpp SceneParser.cpp tinyxml.cpp tinyxmlerror.cpp tinyxmlparser.cpp Camera.cpp ppm.cpp
+CFILES = main.cpp 
 
 all: louis
 
@@ -19,8 +19,6 @@ louis: $(CFILES)
 
 v: $(CFILES) 
 	$(CC) $(LCFLAGS_VERBOSE) $(CFILES) $(LLFLAGS) -o $(TARGET)
-
-q: louis
 
 jayme: $(CFILES)
 	$(CC) $(MCFLAGS) $(CFILES) -I $(MCLIBS) $(MCFRAME) -o $(TARGET)
