@@ -10,7 +10,7 @@ class Fountain : public ParticleSystem {
 		void drawParticles();
 
 	private:
-		void createParticle(int i);
+		Particle createParticle();
 		void evolveParticles();
 };
 

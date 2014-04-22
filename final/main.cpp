@@ -41,7 +41,7 @@ void myGlutReshape(int x, int y)
 {
 	float xy_aspect;
 	xy_aspect = (float)x / (float)y;
-	glutFullScreen();
+	// TODO: glutFullScreen();
 	//
 	glViewport(0, 0, x, y);
 	// Determine if we are modifying the camera(GL_PROJECITON) matrix(which is our viewing volume)
@@ -72,6 +72,16 @@ void drawAxis(){
 }
 */
 
+void drawAxis(){                                                                    
+    glBegin(GL_LINES);                                                              
+        glColor3f(1.0, 0.0, 0.0);                                                   
+        glVertex3f(0, 0, 0); glVertex3f(1.0, 0, 0);                                 
+        glColor3f(0.0, 1.0, 0.0);                                                   
+        glVertex3f(0, 0, 0); glVertex3f(0.0, 1.0, 0);                               
+        glColor3f(0.0, 0.0, 1.0);                                                   
+        glVertex3f(0, 0, 0); glVertex3f(0, 0, 1.0);                                 
+    glEnd();                                                                        
+}    
 
 void myGlutDisplay(void)
 {
@@ -82,14 +92,20 @@ void myGlutDisplay(void)
 	glLoadIdentity();
 
 	// here we are moving the camera back by 0.5 on the z-axis
+	// TODO: Implement translation, scaling, rotation
+	
 	glTranslatef(0, 0, -0.5);
 	
 	//allow for user controlled rotation and scaling
 	glScalef(scale / 100.0, scale / 100.0, scale / 100.0);
 	glRotatef(rotX, rotY, rotZ, 0.0);
 	
+#if 0
+    glLoadIdentity();
+    glRotatef(50.0, 1.0, 0.0, 0.0);
+#endif 
 	// In this case, just the drawing of the axes.
-	// drawAxis();
+	drawAxis();
 
 	// draw the fountain
 	fountain.drawParticles();
@@ -106,6 +122,7 @@ void myGlutDisplay(void)
 void onExit()
 {
 }
+
 
 int main(int argc, char* argv[])
 {
