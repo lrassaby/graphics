@@ -11,11 +11,15 @@
 #include <fstream>
 #include <GL/glui.h>
 #include <math.h>
+#include "fountain.h"
 
 /* These are the live variables passed into GLUI */
 int main_window;
 int rotX = 0, rotY = 0, rotZ = 0;
 int scale = 100;
+
+/* global variables */
+Fountain fountain;
 
 void myGlutIdle(void)
 {
@@ -86,6 +90,9 @@ void myGlutDisplay(void)
 	
 	// In this case, just the drawing of the axes.
 	// drawAxis();
+
+	// draw the fountain
+	fountain.drawParticles();
 	
 	// Pop all of these operations off of our model_view stack, thus getting us back
 	// to the default state.
@@ -177,6 +184,5 @@ int main(int argc, char* argv[])
 
 	return EXIT_SUCCESS;
 }
-
 
 
