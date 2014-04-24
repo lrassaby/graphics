@@ -69,6 +69,10 @@ ply::~ply(){
       colors_vao = NULL;
   }
 
+  if(normals_vao != NULL){
+      delete[] normals_vao; 
+      normals_vao = NULL;
+  }
   // Destroy our vertex buffer object
   glDeleteBuffers(1,&vbo_id);
 }
@@ -396,6 +400,14 @@ void ply::buildArrays(){
       return;
     }
 
+    /*
+    normals_vao = new GLfloat [vertexCount*3];
+    if(normals_vao ==NULL){
+      cout << "Ran out of memory(normals_vao)!" << endl;
+      return;
+    }
+    */
+
     // Compress all of the vertices into a simple array
     if(vertexList==NULL){
         return;
@@ -493,8 +505,18 @@ void ply::renderVertexArray(){
   Postcondition:
 =============================================== */  
 void ply::renderVertexBufferObject(){
-  
-      // TODO
+
+    GLuint vertexVBO;
+
+   glGenBuffers(1, &vertexVBO);
+    // Once we know how many buffers to generate, then hook up the buffer to a vbo_id.
+    glBindBuffer(GL_ARRAY_BUFFER, vertexVBO);
+    // Now we finally copy data into the buffer object
+    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*vertexCount*3+sizeof(GLfloat)*vertexCount*3, 0, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, vertexVBO);
+    
       // Implement this, study the 'renderVertexArray' function.
       // 1.) Remember to bind your buffer
       // 2.) And then also add in an array of normals (study 'buildArrays' function)

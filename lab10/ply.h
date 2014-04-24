@@ -143,6 +143,7 @@ class ply : public entity{
 		GLfloat* vertex_vao;
 	    GLushort* indicies_vao;
 	    GLfloat* colors_vao; 
+	    GLfloat* normals_vao; 
 
 };
 

@@ -1,3 +1,4 @@
+
 /*  =================== File Information =================
 	File Name: main.cpp
 	Description:
@@ -197,7 +198,7 @@ void myGlutDisplay(void)
 			glColor3f(0.5, 0.5, 0.5);
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-			//dragonPLY->renderVertexArray();
+			dragonPLY->renderVertexArray();
 			glPushMatrix();
 				glTranslatef(0,0,1);
 				dragonPLY->renderVertexBufferObject();
