@@ -15,11 +15,39 @@
 
 /* These are the live variables passed into GLUI */
 int main_window;
-int rotX = 0, rotY = 0, rotZ = 0;
-int scale = 100;
+float view_rotate[16] = { 1,0,0,0, 
+	                      0,1,0,0, 
+	                      0,0,1,0, 
+	                      0,0,0,1 };
+float obj_pos[] = { 0.0, 0.0, 0.0 };
+
+GLUI *glui;
+
 
 /* global variables */
+enum SystemType {
+	FOUNTAIN,
+	FIRE_FOUNTAIN,
+	BUBBLES
+};
+
+
 Fountain fountain;
+
+
+SystemType current_number;
+ParticleSystem *current_system = &fountain;
+
+
+
+void callbackSystemType (int id) {
+	switch(current_number) {
+		case FOUNTAIN:
+			current_system = &fountain;	
+			break;
+	}
+}
+
 
 void myGlutIdle(void)
 {
@@ -41,7 +69,7 @@ void myGlutReshape(int x, int y)
 {
 	float xy_aspect;
 	xy_aspect = (float)x / (float)y;
-	// TODO: glutFullScreen();
+ 	glutFullScreen();
 	//
 	glViewport(0, 0, x, y);
 	// Determine if we are modifying the camera(GL_PROJECITON) matrix(which is our viewing volume)
@@ -97,8 +125,10 @@ void myGlutDisplay(void)
 	glTranslatef(0, 0, -0.5);
 	
 	//allow for user controlled rotation and scaling
-	glScalef(scale / 100.0, scale / 100.0, scale / 100.0);
-	glRotatef(rotX, rotY, rotZ, 0.0);
+	glTranslatef( obj_pos[0], obj_pos[1]-0.25, -obj_pos[2]-0.5);
+	glMultMatrixf(view_rotate);
+	
+
 	
 #if 0
     glLoadIdentity();
@@ -176,20 +206,32 @@ int main(int argc, char* argv[])
 	/*         Here's the GLUI code         */
 	/****************************************/
 
-	GLUI *glui = GLUI_Master.create_glui("GLUI");
-	GLUI_Panel *camera_panel = glui->add_panel("Camera");
-	(new GLUI_Spinner(camera_panel, "Rotate X:", &rotX))
-		->set_int_limits(0, 359);
-	(new GLUI_Spinner(camera_panel, "Rotate Y:", &rotY))
-		->set_int_limits(0, 359);
-	(new GLUI_Spinner(camera_panel, "Rotate Z:", &rotZ))
-		->set_int_limits(0, 359);
-	(new GLUI_Spinner(camera_panel, "Scale:", &scale))
-		->set_int_limits(1, 1000);
 
 
-	glui->add_column(true);
+	//GLUI *glui = GLUI_Master.create_glui("GLUI");
+	glui = GLUI_Master.create_glui_subwindow( main_window, GLUI_SUBWINDOW_BOTTOM );
+
+	GLUI_Panel *object_panel = glui->add_panel("Objects");
+
+    GLUI_Rotation *view_rot = new GLUI_Rotation(object_panel, "Objects", view_rotate );
+    view_rot->set_spin( 1.0 );
+    // Navigate our scene
+    new GLUI_Column( object_panel, false );
+    GLUI_Translation *trans_x =  new GLUI_Translation(object_panel, "Objects X", GLUI_TRANSLATION_X, &obj_pos[0] );
+    trans_x->set_speed( .1 );
+    new GLUI_Column( object_panel, false );
+    GLUI_Translation *trans_y =  new GLUI_Translation( object_panel, "Objects Y", GLUI_TRANSLATION_Y, &obj_pos[1] );
+    trans_y->set_speed( .1 );
+    new GLUI_Column( object_panel, false );
+    GLUI_Translation *trans_z =  new GLUI_Translation( object_panel, "Objects Z", GLUI_TRANSLATION_Z, &obj_pos[2] );
+    trans_z->set_speed( .1 );
+    new GLUI_Column( glui, false );
+    GLUI_Panel *particles_panel = glui->add_panel("Particles");
+    (new GLUI_Spinner(particles_panel, "Num particles", &(current_system->num_particles)))->set_int_limits(1, 1000000);
+    new GLUI_Column( glui, false );
 	glui->add_button("Quit", 0, (GLUI_Update_CB)exit);
+
+	/* TODO: reset button */
 
 	glui->set_main_gfx_window(main_window);
 	/* We register the idle callback with GLUI, *not* with GLUT */
