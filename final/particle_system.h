@@ -42,6 +42,11 @@ private:
     GLuint CameraRight_worldspace_ID;
     GLuint CameraUp_worldspace_ID;
     GLuint ViewProjMatrixID;
+    GLuint TextureID;
+    GLuint squareVerticesID;
+    GLuint xyzsID;
+    GLuint colorID;
+    
 
     int last_used_particle;
     int last_time;
