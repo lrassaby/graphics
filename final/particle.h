@@ -33,9 +33,13 @@ class Particle {
 		Color color;    /* color values of the particle */
 		Point pos;		/* particle's position in 3-space */
 		Speed speed;    /* particle's speed */
-		//float angle;
-		//float weight;
-		bool active;    /* is particle active or not? */
+		float angle;
+		float weight;
+		float size;
+		float cameradistance; /* *Squared* distance to the camera. if dead : -1.0f */
+		bool operator<(const Particle& that) const {
+			return this->cameradistance > that.cameradistance;
+		}
 };
 
 #endif  /* particle.h */
