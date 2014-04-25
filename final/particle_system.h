@@ -2,27 +2,59 @@
 #define PARTICLE_SYSTEM_H
 
 #include <vector>
+#include <string>
 #include <GL/glut.h>
 #include "particle.h"
 
-static const GLfloat g_vertex_buffer_data[] = { 
-     -0.5f, -0.5f, 0.0f,
-      0.5f, -0.5f, 0.0f,
-     -0.5f,  0.5f, 0.0f,
-      0.5f,  0.5f, 0.0f,
+static const GLfloat g_vertex_buffer_data[] ={
+    -0.5f, -0.5f, 0.0f,
+    0.5f, -0.5f, 0.0f,
+    -0.5f,  0.5f, 0.0f,
+    0.5f,  0.5f, 0.0f,
 };
 
-class ParticleSystem {
-	public:
-		ParticleSystem();
-		~ParticleSystem(){};
+class ParticleSystem
+{
+public:
+    int max_particles;        /* total number of particles */
 
-		virtual void drawParticles();
-        void SortParticles();
-		int num_particles;
+    ParticleSystem();
+    ~ParticleSystem() {};
+    virtual void drawParticles();
 
-    protected:
-        std::vector<Particle> particles;
+protected:
+    std::vector<Particle> particles;
+    std::string vertex_shader;   /* shader set by child class */
+    std::string fragment_shader; /* shader set by child class */
+    int active_particles;        /* subset of particles that are currently active */
+
+    int findUnusedParticle();
+    void SortParticles();
+    void bindShaders();
+
+private:
+    GLuint billboard_vertex_buffer;
+    GLuint particles_position_buffer;
+    GLuint particles_color_buffer;
+    GLfloat *position_size_data;
+    GLubyte *color_data;
+    GLuint programID;
+    GLuint CameraRight_worldspace_ID;
+    GLuint CameraUp_worldspace_ID;
+    GLuint ViewProjMatrixID;
+    GLuint Texture;
+
+    // fragment shader
+    GLuint TextureID  = glGetUniformLocation(programID, "myTextureSampler");
+
+    // Get a handle for our buffers
+    GLuint squareVerticesID = glGetAttribLocation(programID, "squareVertices");
+    GLuint xyzsID = glGetAttribLocation(programID, "xyzs");
+    GLuint colorID = glGetAttribLocation(programID, "color");   
+    
+
+    int last_used_particle;
+    int last_time;
 };
 
 #endif /* particle_system.h */

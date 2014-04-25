@@ -5,7 +5,7 @@
 #define DECAY 0.001
 
 struct Color {
-	float r, g, b;
+	float r, g, b, a;
 };
 
 struct Speed {

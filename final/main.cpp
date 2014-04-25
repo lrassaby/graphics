@@ -227,7 +227,7 @@ int main(int argc, char* argv[])
     trans_z->set_speed( .1 );
     new GLUI_Column( glui, false );
     GLUI_Panel *particles_panel = glui->add_panel("Particles");
-    (new GLUI_Spinner(particles_panel, "Num particles", &(current_system->num_particles)))->set_int_limits(1, 1000000);
+    (new GLUI_Spinner(particles_panel, "Num particles", &(current_system->max_particles)))->set_int_limits(1, 1000000);
     new GLUI_Column( glui, false );
 	glui->add_button("Quit", 0, (GLUI_Update_CB)exit);
 

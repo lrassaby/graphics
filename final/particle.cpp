@@ -11,7 +11,6 @@ Particle::Particle()
 	speed.yspeed = 0;
 	speed.zspeed = 0;
 	pos = Point();
-	active = true;
 }
 
 Particle::Particle(float lifetime, Color color, Point pos, Speed speed, 
@@ -21,7 +20,6 @@ Particle::Particle(float lifetime, Color color, Point pos, Speed speed,
 	this->color = color;
 	this->speed = speed;
 	this->pos = pos;
-	this->active = true;
 }
 
 Particle::~Particle() {}

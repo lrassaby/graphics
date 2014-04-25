@@ -2,6 +2,7 @@
 #define ALGEBRA_H
 
 #include <math.h>
+#include <GL/glut.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -251,6 +252,13 @@ public:
 	}
 
 	Matrix(double* m) {
+		p[0] = m[0]; p[1] = m[1]; p[2] = m[2]; p[3] = m[3];
+		p[4] = m[4]; p[5] = m[5]; p[6] = m[6]; p[7] = m[7];
+		p[8] = m[8]; p[9] = m[9]; p[10] = m[10]; p[11] = m[11];
+		p[12] = m[12]; p[13] = m[13]; p[14] = m[14]; p[15] = m[15];
+	}
+
+	Matrix(GLfloat *m) {
 		p[0] = m[0]; p[1] = m[1]; p[2] = m[2]; p[3] = m[3];
 		p[4] = m[4]; p[5] = m[5]; p[6] = m[6]; p[7] = m[7];
 		p[8] = m[8]; p[9] = m[9]; p[10] = m[10]; p[11] = m[11];

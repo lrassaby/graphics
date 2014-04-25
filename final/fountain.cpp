@@ -6,8 +6,9 @@ enum dims {X, Y, Z};
 
 Fountain::Fountain()
 {
-    num_particles = 1000;    
+    max_particles = 1000;    
 }
+
 Fountain::~Fountain(){}
 
 Particle Fountain::createParticle()
@@ -28,48 +29,16 @@ Particle Fountain::createParticle()
 
 void Fountain::drawParticles()
 {
-
-    GLuint billboard_vertex_buffer;
-    glGenBuffers(1, &billboard_vertex_buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, billboard_vertex_buffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
-
-        // The VBO containing the positions and sizes of the particles
-    GLuint particles_position_buffer;
-    glGenBuffers(1, &particles_position_buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, particles_position_buffer);
-    // Initialize with empty (NULL) buffer : it will be updated later, each frame.
-    glBufferData(GL_ARRAY_BUFFER, num_particles * 4 * sizeof(GLfloat), NULL, GL_STREAM_DRAW);
-
-    // The VBO containing the colors of the particles
-    GLuint particles_color_buffer;
-    glGenBuffers(1, &particles_color_buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, particles_color_buffer);
-    // Initialize with empty (NULL) buffer : it will be updated later, each frame.
-    glBufferData(GL_ARRAY_BUFFER, num_particles * 4 * sizeof(GLubyte), NULL, GL_STREAM_DRAW);
-
-
-    int lastTime = glutGet(GLUT_ELAPSED_TIME);
-
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    
-
-
-
-
-
-
     glBegin(GL_POINTS);
     //glBindTexture(GL_TEXTURE_2D,ParticleTexture);
-    for (int i = 0; i <= this->num_particles; i++) {
+    for (int i = 0; i <= this->max_particles; i++) {
         if (i >= particles.size()) {
             particles.push_back(createParticle());
         }
         if (particles[i].pos[Y] < 0.0) {
             particles[i].lifetime = 0.0;
         }
-        if ((particles[i].active == true) && (particles[i].lifetime > 0.0)) {
+        if (particles[i].lifetime > 0.0) {
             glColor3f(particles[i].color.r, particles[i].color.g, particles[i].color.b);
             glVertex3dv(particles[i].pos.unpack());
 
@@ -92,7 +61,7 @@ void Fountain::drawParticles()
 
 void Fountain::evolveParticles()
 {
-    for (int i = 0; i <= this->num_particles; i++) {
+    for (int i = 0; i <= this->max_particles; i++) {
         particles[i].lifetime -= DECAY;
         particles[i].pos[X] += particles[i].speed.xspeed;
         particles[i].pos[Y] += particles[i].speed.yspeed;
