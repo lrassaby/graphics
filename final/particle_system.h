@@ -42,16 +42,6 @@ private:
     GLuint CameraRight_worldspace_ID;
     GLuint CameraUp_worldspace_ID;
     GLuint ViewProjMatrixID;
-    GLuint Texture;
-
-    // fragment shader
-    GLuint TextureID  = glGetUniformLocation(programID, "myTextureSampler");
-
-    // Get a handle for our buffers
-    GLuint squareVerticesID = glGetAttribLocation(programID, "squareVertices");
-    GLuint xyzsID = glGetAttribLocation(programID, "xyzs");
-    GLuint colorID = glGetAttribLocation(programID, "color");   
-    
 
     int last_used_particle;
     int last_time;
