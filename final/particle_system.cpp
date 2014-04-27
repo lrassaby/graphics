@@ -16,7 +16,9 @@ void ParticleSystem::initialize()
     position_size_data = new GLfloat[max_particles * 4];
     color_data = new GLubyte[max_particles * 4];
     Shader manager;
+    particles.resize(max_particles);
 
+    #if 0
     getCameraMatrices();
 
     // Accept fragment if it closer to the camera than the former one
@@ -38,7 +40,6 @@ void ParticleSystem::initialize()
     xyzsID = glGetAttribLocation(programID, "xyzs");
     colorID = glGetAttribLocation(programID, "color");   
     
-    particles.resize(max_particles);
 
     //Texture = loadDDS("particle.DDS");
 
@@ -58,6 +59,7 @@ void ParticleSystem::initialize()
     // Initialize with empty (NULL) buffer : it will be updated later, each frame.
     glBufferData(GL_ARRAY_BUFFER, max_particles * 4 * sizeof(GLubyte), NULL, GL_STREAM_DRAW);
 
+    #endif
 }
 
 void ParticleSystem::setGPUBuffers(Particle *particle, int particle_index)
@@ -82,9 +84,9 @@ void ParticleSystem::drawParticles()
 
     getCameraMatrices();
 
-    Point cameraPosition(model_view[3], model_view[7], model_view[11]);
+    camera_position = Point(model_view(0, 3), model_view(1, 3), model_view(2, 3));
     computeParticles();
-    bindShaders();
+    //bindShaders();
 }
 
 
@@ -139,8 +141,8 @@ void ParticleSystem::bindShaders()
     //glUniform1i(TextureID, 0);
 
     // Same as the billboards tutorial
-    glUniform3f(CameraRight_worldspace_ID, model_view[0], model_view[4], model_view[8]);
-    glUniform3f(CameraUp_worldspace_ID, model_view[1], model_view[5], model_view[9]);
+    glUniform3f(CameraRight_worldspace_ID, model_view(0, 0), model_view(1, 0), model_view(2, 0));
+    glUniform3f(CameraUp_worldspace_ID, model_view(0, 1), model_view(1, 1), model_view(2, 1));
 
     glUniformMatrix4dv(ViewProjMatrixID, 1, GL_FALSE, model_projection.unpack());
 

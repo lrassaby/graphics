@@ -41,10 +41,10 @@ void Fountain::computeParticles()
 {
     active_particles = 0;
     Vector gravity(0.0f, -9.81f, 0.0f);
-    Point cameraPosition(model_view[3], model_view[7], model_view[11]);
 
     createNewParticles();
-
+    glColor3b(255, 255, 255);
+    glBegin(GL_POINTS); 
     for (int i = 0; i < max_particles; i++) {
         Particle *p = &(particles[i]);
 
@@ -53,13 +53,16 @@ void Fountain::computeParticles()
             if (p->lifetime > 0.0f) {
                 p->speed = p->speed + gravity * ((double)elapsed * 0.5f);
                 p->pos = p->pos + (p->speed * (double)elapsed);
-                p->cameradistance = length((p->pos - cameraPosition));
+                fprintf(stderr, "%f %f %f \n", p->pos[X], p->pos[Y], p->pos[Z]);
+                p->cameradistance = length((p->pos - camera_position));
                 setGPUBuffers(p, active_particles);
             } else {
                 p->cameradistance = -1.0f; /* particle has just died */
             }
+            //fprintf(stderr, "%f %f %f \n", p->pos[X], p->pos[Y], p->pos[Z])
+            glVertex3dv(particles[i].pos.unpack());
             active_particles++;
         }
     }
-    
+    glEnd();
 }

@@ -111,7 +111,7 @@ void myGlutDisplay(void)
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
-	// here we are moving the camera back by 0.5 on the z-axis
+	// here we are moving the camera back by 0.5 on the z-axi/mains
 	// TODO: Implement translation, scaling, rotation
 	
 	glTranslatef(0, 0, -0.5);
@@ -230,8 +230,6 @@ int main(int argc, char* argv[])
 
 
 	fountain.initialize();
-
-
 
 	glutMainLoop();
 

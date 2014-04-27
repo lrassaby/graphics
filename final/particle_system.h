@@ -32,6 +32,7 @@ protected:
     int elapsed;
     float spread;  /* controls randomness spread */
     float radius;
+    Point camera_position;
 
     Matrix model_view;
     Matrix projection;
