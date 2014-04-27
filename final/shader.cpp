@@ -45,20 +45,21 @@ GLuint Shader::loadShader(const char* vertPath, const char* fragPath) {
     //compile vertex shader
     glShaderSource(vertShader, 1, &vertShaderSrc, NULL);
     glCompileShader(vertShader);
-    glGetShaderiv(vertShader, GL_COMPILE_STATUS, &result);
-    glGetShaderiv(vertShader, GL_INFO_LOG_LENGTH, &logLength);
-    vector<char> vertShaderError(logLength);
-    glGetShaderInfoLog(vertShader, logLength, NULL, &vertShaderError[0]);
-    cout << &vertShaderError[0] << endl;
+    //glGetShaderiv(vertShader, GL_COMPILE_STATUS, &result);
+    //glGetShaderiv(vertShader, GL_INFO_LOG_LENGTH, &logLength);
+    //vector<char> vertShaderError(logLength);
+    char error[1024];
+    glGetShaderInfoLog(vertShader, 1024, NULL, error);
+    cout << "Compiler errors: \n" << error << endl;
 
     //compile fragment shader
     glShaderSource(fragShader, 1, &fragShaderSrc, NULL);
     glCompileShader(fragShader);
-    glGetShaderiv(fragShader, GL_COMPILE_STATUS, &result);
-    glGetShaderiv(fragShader, GL_INFO_LOG_LENGTH, &logLength);
-    vector<char> fragShaderError(logLength);
-    glGetShaderInfoLog(fragShader, logLength, NULL, &fragShaderError[0]);
-    cout << &fragShaderError[0] << endl; 
+    // glGetShaderiv(fragShader, GL_COMPILE_STATUS, &result);
+    // glGetShaderiv(fragShader, GL_INFO_LOG_LENGTH, &logLength);
+    // vector<char> fragShaderError(logLength);
+    glGetShaderInfoLog(fragShader, 1024, NULL, error);
+    cout << "Compiler errors: \n" << error << endl;
 
     //link the program
     GLuint program = glCreateProgram();

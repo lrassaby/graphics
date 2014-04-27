@@ -5,6 +5,7 @@
 ParticleSystem::ParticleSystem()
 {
     max_particles = 1000;
+
     last_used_particle = 0;
 }
 
@@ -37,7 +38,8 @@ void ParticleSystem::initialize()
     xyzsID = glGetAttribLocation(programID, "xyzs");
     colorID = glGetAttribLocation(programID, "color");   
     
-
+    particles.resize(max_particles);
+    
     for(int i= 0; i< max_particles; i++){
         particles[i].lifetime = -1.0f;
         particles[i].cameradistance = -1.0f;

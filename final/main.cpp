@@ -34,7 +34,6 @@ enum SystemType {
 
 Fountain fountain;
 
-
 SystemType current_number;
 ParticleSystem *current_system = &fountain;
 
@@ -168,7 +167,7 @@ int main(int argc, char* argv[])
 	glutInitWindowPosition(50, 50);
 	glutInitWindowSize(500, 500);
 
-	main_window = glutCreateWindow("COMP 175 In Class Assignment 1");
+	main_window = glutCreateWindow("Magical Particle Systems");
 	glutDisplayFunc(myGlutDisplay);
 	glutReshapeFunc(myGlutReshape);
 
@@ -238,8 +237,6 @@ int main(int argc, char* argv[])
 	glui->set_main_gfx_window(main_window);
 	/* We register the idle callback with GLUI, *not* with GLUT */
 	GLUI_Master.set_glutIdleFunc(myGlutIdle);
-
-
 
 
 	fountain.initialize();
