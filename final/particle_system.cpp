@@ -225,5 +225,5 @@ void ParticleSystem::getCameraMatrices()
     glGetFloatv(GL_PROJECTION_MATRIX, p);
     model_view = Matrix(mv);
     projection = Matrix(p);
-    model_projection = model_view * projection;
+    model_projection = projection * model_view;
 }
