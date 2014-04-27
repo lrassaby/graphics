@@ -24,6 +24,8 @@ float obj_pos[] = { 0.0, 0.0, 0.0 };
 GLUI *glui;
 
 
+
+
 /* global variables */
 enum SystemType {
 	FOUNTAIN,
@@ -43,6 +45,10 @@ void callbackSystemType (int id) {
 	switch(current_number) {
 		case FOUNTAIN:
 			current_system = &fountain;	
+			break;
+		case FIRE_FOUNTAIN:
+			break;
+		case BUBBLES:
 			break;
 	}
 }
@@ -86,19 +92,6 @@ void myGlutReshape(int x, int y)
 	glutPostRedisplay();
 }
 
-/*
-void drawAxis(){
-	glBegin(GL_LINES);
-		glColor3f(1.0, 0.0, 0.0);
-		glVertex3f(0, 0, 0); glVertex3f(1.0, 0, 0);
-		glColor3f(0.0, 1.0, 0.0);
-		glVertex3f(0, 0, 0); glVertex3f(0.0, 1.0, 0);
-		glColor3f(0.0, 0.0, 1.0);
-		glVertex3f(0, 0, 0); glVertex3f(0, 0, 1.0);
-	glEnd();
-}
-*/
-
 void drawAxis(){                                                                    
     glBegin(GL_LINES);                                                              
         glColor3f(1.0, 0.0, 0.0);                                                   
@@ -128,11 +121,6 @@ void myGlutDisplay(void)
 	glMultMatrixf(view_rotate);
 	
 
-	
-#if 0
-    glLoadIdentity();
-    glRotatef(50.0, 1.0, 0.0, 0.0);
-#endif 
 	// In this case, just the drawing of the axes.
 	drawAxis();
 
@@ -228,6 +216,8 @@ int main(int argc, char* argv[])
     trans_z->set_speed( .1 );
     new GLUI_Column( glui, false );
     GLUI_Panel *particles_panel = glui->add_panel("Particles");
+
+	/* TODO: Fix seg faults when changing number of particles by using "new max particles" variable and setting within particle_system.cpp */
     (new GLUI_Spinner(particles_panel, "Num particles", &(current_system->max_particles)))->set_int_limits(1, 1000000);
     new GLUI_Column( glui, false );
 	glui->add_button("Quit", 0, (GLUI_Update_CB)exit);
