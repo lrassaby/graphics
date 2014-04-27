@@ -7,8 +7,8 @@ enum dims {X, Y, Z};
 Fountain::Fountain()
 {
     max_particles = 1000;    
-    vertex_shader = ""; 
-    fragment_shader = ""; 
+    vertex_shader = "particle.vert"; 
+    fragment_shader = "particle.frag"; 
 }
 
 Fountain::~Fountain(){}

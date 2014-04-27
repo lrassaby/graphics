@@ -200,6 +200,8 @@ int main(int argc, char* argv[])
 	/****************************************/
 
 	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
+
 	glPolygonOffset(1, 1);
 
 	/****************************************/
@@ -236,6 +238,11 @@ int main(int argc, char* argv[])
 	glui->set_main_gfx_window(main_window);
 	/* We register the idle callback with GLUI, *not* with GLUT */
 	GLUI_Master.set_glutIdleFunc(myGlutIdle);
+
+
+
+
+	fountain.initialize();
 
 
 

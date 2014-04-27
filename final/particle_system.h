@@ -19,6 +19,7 @@ public:
     int max_particles;        /* total number of particles */
 
     ParticleSystem();
+    void initialize(); 
     ~ParticleSystem() {};
     virtual void drawParticles();
 

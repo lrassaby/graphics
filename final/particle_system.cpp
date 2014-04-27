@@ -6,18 +6,23 @@ ParticleSystem::ParticleSystem()
 {
     max_particles = 1000;
     last_used_particle = 0;
+}
+
+
+void ParticleSystem::initialize()
+{
     last_time = glutGet(GLUT_ELAPSED_TIME);
     position_size_data = new GLfloat[max_particles * 4];
     color_data = new GLubyte[max_particles * 4];
     Shader manager;
 
-// Enable depth test
-    glEnable(GL_DEPTH_TEST);
+
     // Accept fragment if it closer to the camera than the former one
-    glDepthFunc(GL_LESS);
+
 
     // Create and compile our GLSL program from the shaders
-    programID = manager.loadShader(vertex_shader.c_str(), fragment_shader.c_str());
+    // programID = manager.loadShader(vertex_shader.c_str(), fragment_shader.c_str());
+    programID = manager.loadShader("particle.vert", "particle.frag");
 
     // Vertex shader
     CameraRight_worldspace_ID  = glGetUniformLocation(programID, "CameraRight_worldspace");
