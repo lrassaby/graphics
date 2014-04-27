@@ -21,17 +21,29 @@ public:
     ParticleSystem();
     void initialize(); 
     ~ParticleSystem() {};
-    virtual void drawParticles();
+    void drawParticles();
 
 protected:
     std::vector<Particle> particles;
     std::string vertex_shader;   /* shader set by child class */
     std::string fragment_shader; /* shader set by child class */
     int active_particles;        /* subset of particles that are currently active */
+    int last_time;
+    int elapsed;
+    float spread;  /* controls randomness spread */
+    float radius;
+
+    Matrix model_view;
+    Matrix projection;
+    Matrix model_projection;
 
     int findUnusedParticle();
     void SortParticles();
     void bindShaders();
+    void setGPUBuffers(Particle *particle, int particle_index);
+    Vector getRandVector();
+    Color getRandColor();
+    virtual void computeParticles(){};
 
 private:
     GLuint billboard_vertex_buffer;
@@ -47,10 +59,9 @@ private:
     GLuint squareVerticesID;
     GLuint xyzsID;
     GLuint colorID;
-    
-
     int last_used_particle;
-    int last_time;
+
+    void getCameraMatrices();
 };
 
 #endif /* particle_system.h */

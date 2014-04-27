@@ -7,11 +7,10 @@ class Fountain : public ParticleSystem {
 	public:
 		Fountain();
 		~Fountain();
-		void drawParticles();
+		void computeParticles();
 
 	private:
-		Particle createParticle();
-		void evolveParticles();
+		void createNewParticles();
 };
 
 #endif /* fountain.h */

@@ -13,26 +13,17 @@ struct Color {
 	};
 };
 
-struct Speed {
-	union {
-		struct {
-			float xspeed, yspeed, zspeed;
-		};
-		float dimensions[3];
-	};
-};
-
 class Particle {
 	public:		
 		Particle();
-		Particle(float lifetime, Color color, Point pos, Speed speed, 
+		Particle(float lifetime, Color color, Point pos, Vector speed, 
 			bool active);
 		~Particle();
 
 		float lifetime; /* total lifetime of the particle */
 		Color color;    /* color values of the particle */
 		Point pos;		/* particle's position in 3-space */
-		Speed speed;    /* particle's speed */
+		Vector speed;    /* particle's speed */
 		float angle;
 		float weight;
 		float size;

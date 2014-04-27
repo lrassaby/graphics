@@ -2,73 +2,64 @@
 #include <GL/glui.h>
 #include <stdlib.h>
 
-enum dims {X, Y, Z};
-
 Fountain::Fountain()
 {
     max_particles = 1000;    
     vertex_shader = "particle.vert"; 
     fragment_shader = "particle.frag"; 
+    spread = 1.5f; 
 }
 
 Fountain::~Fountain(){}
 
-Particle Fountain::createParticle()
+void Fountain::createNewParticles()
 {
-    Particle new_particle;
-    new_particle.lifetime = (float)(rand() % 500000) / 500000.0;
-    new_particle.color.r = 0.7;
-    new_particle.color.g = 0.7;
-    new_particle.color.b = 1.0;
-    new_particle.pos[X] = 0.0;
-    new_particle.pos[Y] = 0.0;
-    new_particle.pos[Z] = 0.0;
-    new_particle.speed.xspeed = 0.0005 - (float)(rand() % 100) / 100000.0;
-    new_particle.speed.yspeed = 0.01 - (float)(rand() % 100) / 100000.0;
-    new_particle.speed.zspeed = 0.0005 - (float)(rand() % 100) / 100000.0;
-    return new_particle;
+    int newparticles = elapsed * 10;
+    if (newparticles > 160) { 
+        newparticles = 160;
+    }
+    for (int i = 0; i < newparticles; i++) {
+        int particle_index = findUnusedParticle();
+        particles[particle_index].lifetime = 5.0f;
+        particles[particle_index].pos = Point(0, 0, -20);
+
+        Vector main_direction(0.0, 10.0, 0.0);
+        Vector rand_direction = getRandVector();
+
+        particles[particle_index].speed = main_direction + rand_direction * spread;
+        /* TODO: generate random colors */
+        particles[particle_index].color.r = rand() % 256;
+        particles[particle_index].color.g = rand() % 256;
+        particles[particle_index].color.b = rand() % 256;
+        particles[particle_index].color.a = rand() % 80;
+
+        particles[particle_index].size = (rand() % 1000) / 2000.0f + 0.1f;
+    }
 }
 
-void Fountain::drawParticles()
+void Fountain::computeParticles()
 {
-    glBegin(GL_POINTS);
-    //glBindTexture(GL_TEXTURE_2D,ParticleTexture);
-    for (int i = 0; i <= this->max_particles; i++) {
-        if (i >= particles.size()) {
-            particles.push_back(createParticle());
-        }
-        if (particles[i].pos[Y] < 0.0) {
-            particles[i].lifetime = 0.0;
-        }
-        if (particles[i].lifetime > 0.0) {
-            glColor3f(particles[i].color.r, particles[i].color.g, particles[i].color.b);
-            glVertex3dv(particles[i].pos.unpack());
+    active_particles = 0;
+    Vector gravity(0.0f, -9.81f, 0.0f);
+    Point cameraPosition(model_view[3], model_view[7], model_view[11]);
 
-            /*
-            glBegin(GL_TRIANGLE_STRIP);
-            glTexCoord2f(0.0, 1.0); glVertex3f(particles[i].pos[X] + 0.002, particles[i].pos[Y] + 0.002, particles[i].pos[Z] + 0.0);    // top    right
-            glTexCoord2f(0.0, 0.0); glVertex3f(particles[i].pos[X] - 0.002, particles[i].pos[Y] + 0.002, particles[i].pos[Z] + 0.0);    // top    left
-            glTexCoord2f(1.0, 1.0); glVertex3f(particles[i].pos[X] + 0.002, particles[i].pos[Y] - 0.002, particles[i].pos[Z] + 0.0);    // bottom right
-            glTexCoord2f(1.0, 0.0); glVertex3f(particles[i].pos[X] - 0.002, particles[i].pos[Y] - 0.002, particles[i].pos[Z] + 0.0);    // bottom left
-            glEnd();
-            */
-        }
-        else {
-            particles[i] = createParticle();
+    createNewParticles();
+
+    for (int i = 0; i < max_particles; i++) {
+        Particle *p = &(particles[i]);
+
+        if (p->lifetime > 0.0f) {
+            p->lifetime -= elapsed;
+            if (p->lifetime > 0.0f) {
+                p->speed = p->speed + gravity * ((double)elapsed * 0.5f);
+                p->pos = p->pos + (p->speed * (double)elapsed);
+                p->cameradistance = length((p->pos - cameraPosition));
+                setGPUBuffers(p, active_particles);
+            } else {
+                p->cameradistance = -1.0f; /* particle has just died */
+            }
+            active_particles++;
         }
     }
-    evolveParticles();
-    glEnd(); 
-}
-
-void Fountain::evolveParticles()
-{
-    for (int i = 0; i <= this->max_particles; i++) {
-        particles[i].lifetime -= DECAY;
-        particles[i].pos[X] += particles[i].speed.xspeed;
-        particles[i].pos[Y] += particles[i].speed.yspeed;
-        particles[i].pos[Z] += particles[i].speed.zspeed;
-        particles[i].speed.yspeed -= 0.00007;
-    }
-
+    
 }

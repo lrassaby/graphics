@@ -16,6 +16,9 @@ const double EPSILON = 1e-30;
 #define RAD_TO_DEG(a)	(a/RAD)
 #define SQR(a)	 (a*a)
 
+enum Dimensions {X = 0, Y, Z, SIZE};
+enum Colors {R = 0, G, B, A};
+
 class Point {
 public:
 	Point() {

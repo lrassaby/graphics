@@ -5,21 +5,21 @@
 ParticleSystem::ParticleSystem()
 {
     max_particles = 1000;
-
     last_used_particle = 0;
+    spread = 1.0f; 
 }
-
 
 void ParticleSystem::initialize()
 {
+    /* TODO: set up camera position...to set in particle system */
     last_time = glutGet(GLUT_ELAPSED_TIME);
     position_size_data = new GLfloat[max_particles * 4];
     color_data = new GLubyte[max_particles * 4];
     Shader manager;
 
+    getCameraMatrices();
 
     // Accept fragment if it closer to the camera than the former one
-
 
     // Create and compile our GLSL program from the shaders
     // programID = manager.loadShader(vertex_shader.c_str(), fragment_shader.c_str());
@@ -39,11 +39,6 @@ void ParticleSystem::initialize()
     colorID = glGetAttribLocation(programID, "color");   
     
     particles.resize(max_particles);
-    
-    for(int i= 0; i< max_particles; i++){
-        particles[i].lifetime = -1.0f;
-        particles[i].cameradistance = -1.0f;
-    }
 
     //Texture = loadDDS("particle.DDS");
 
@@ -62,9 +57,36 @@ void ParticleSystem::initialize()
     glBindBuffer(GL_ARRAY_BUFFER, particles_color_buffer);
     // Initialize with empty (NULL) buffer : it will be updated later, each frame.
     glBufferData(GL_ARRAY_BUFFER, max_particles * 4 * sizeof(GLubyte), NULL, GL_STREAM_DRAW);
+
 }
 
-void ParticleSystem::drawParticles() {}
+void ParticleSystem::setGPUBuffers(Particle *particle, int particle_index)
+{
+    int i = 4 * particle_index;
+    position_size_data[i + X] = particle->pos[X];
+    position_size_data[i + Y] = particle->pos[Y];
+    position_size_data[i + Z] = particle->pos[Z];
+    position_size_data[i + SIZE] = particle->size;
+
+    color_data[i + R] = particle->color.r;
+    color_data[i + G] = particle->color.g;
+    color_data[i + B] = particle->color.b;
+    color_data[i + A] = particle->color.a;
+}
+
+void ParticleSystem::drawParticles() 
+{
+    int current_time = glutGet(GLUT_ELAPSED_TIME);
+    elapsed = current_time - last_time;
+    last_time = current_time;
+
+    getCameraMatrices();
+
+    Point cameraPosition(model_view[3], model_view[7], model_view[11]);
+    computeParticles();
+    bindShaders();
+}
+
 
 /*
  * Finds a Particle in ParticlesContainer which isn't used yet. (i.e. life < 0);
@@ -116,19 +138,11 @@ void ParticleSystem::bindShaders()
     // Set our "myTextureSampler" sampler to user Texture Unit 0
     //glUniform1i(TextureID, 0);
 
-    GLfloat mv[16];
-    GLfloat p[16];
-    glGetFloatv(GL_MODELVIEW_MATRIX, mv);
-    glGetFloatv(GL_PROJECTION_MATRIX, p);
-    Matrix model_view = Matrix(mv);
-    Matrix perspective = Matrix(p);
-    Matrix model_perspective = model_view * perspective;
-
     // Same as the billboards tutorial
     glUniform3f(CameraRight_worldspace_ID, model_view[0], model_view[4], model_view[8]);
     glUniform3f(CameraUp_worldspace_ID, model_view[1], model_view[5], model_view[9]);
 
-    glUniformMatrix4dv(ViewProjMatrixID, 1, GL_FALSE, model_perspective.unpack());
+    glUniformMatrix4dv(ViewProjMatrixID, 1, GL_FALSE, model_projection.unpack());
 
     // 1rst attribute buffer : vertices
     glEnableVertexAttribArray(squareVerticesID);
@@ -183,4 +197,31 @@ void ParticleSystem::bindShaders()
     glDisableVertexAttribArray(squareVerticesID);
     glDisableVertexAttribArray(xyzsID);
     glDisableVertexAttribArray(colorID);
+}
+
+Vector ParticleSystem::getRandVector()
+{
+    float phi = (rand() / RAND_MAX )* 2 * M_PI;
+    float costheta = (2 * (rand() / RAND_MAX)) - 1;
+    float u = (rand() / RAND_MAX);
+
+    float theta = acos(costheta);
+    float r = radius * pow(u, (1/3));
+
+    float x = r * sin(theta) * cos(phi);
+    float y = r * sin(theta) * sin(phi);
+    float z = r * cos(theta);
+
+    return Vector(x, y, z);
+}
+
+void ParticleSystem::getCameraMatrices()
+{
+    GLfloat mv[16];
+    GLfloat p[16];
+    glGetFloatv(GL_MODELVIEW_MATRIX, mv);
+    glGetFloatv(GL_PROJECTION_MATRIX, p);
+    model_view = Matrix(mv);
+    projection = Matrix(p);
+    model_projection = model_view * projection;
 }
