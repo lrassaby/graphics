@@ -7,7 +7,7 @@ Fountain::Fountain()
     max_particles = 1000;    
     vertex_shader = "particle.vert"; 
     fragment_shader = "particle.frag"; 
-    spread = 1.5f; 
+    spread = 1.0f; 
 }
 
 Fountain::~Fountain(){}
@@ -21,7 +21,7 @@ void Fountain::createNewParticles()
     for (int i = 0; i < newparticles; i++) {
         int particle_index = findUnusedParticle();
         particles[particle_index].lifetime = 5.0f;
-        particles[particle_index].pos = Point(0, 0, -20);
+        particles[particle_index].pos = Point(0, 0, -5.0);
 
         Vector main_direction(0.0, 10.0, 0.0);
         Vector rand_direction = getRandVector();
@@ -43,23 +43,26 @@ void Fountain::computeParticles()
     Vector gravity(0.0f, -9.81f, 0.0f);
 
     createNewParticles();
-    glColor3b(255, 255, 255);
     glBegin(GL_POINTS); 
+    glColor3f(1.0, 1.0, 1.0);
     for (int i = 0; i < max_particles; i++) {
-        Particle *p = &(particles[i]);
+        Particle *p = &particles[i];
+        //fprintf(stderr, "before %d pos: %f %f %f \n", i, p->pos[X], p->pos[Y], p->pos[Z]);
 
         if (p->lifetime > 0.0f) {
-            p->lifetime -= elapsed;
+            fprintf(stderr, "elapsed %d\n", elapsed);
+            p->lifetime -= elapsed / 100;
             if (p->lifetime > 0.0f) {
-                p->speed = p->speed + gravity * ((double)elapsed * 0.5f);
-                p->pos = p->pos + (p->speed * (double)elapsed);
-                fprintf(stderr, "%f %f %f \n", p->pos[X], p->pos[Y], p->pos[Z]);
+                p->speed = p->speed + (gravity * (elapsed * 0.1f));
+                fprintf(stderr, "speed: %f\n", p->speed[Y]);
+                p->pos = p->pos + (p->speed * elapsed / 100);
                 p->cameradistance = length((p->pos - camera_position));
-                setGPUBuffers(p, active_particles);
+                fprintf(stderr, " inside loop %d pos: %f %f %f \n", i, p->pos[X], p->pos[Y], p->pos[Z]);
+                //setGPUBuffers(p, active_particles);
             } else {
                 p->cameradistance = -1.0f; /* particle has just died */
             }
-            //fprintf(stderr, "%f %f %f \n", p->pos[X], p->pos[Y], p->pos[Z])
+            //fprintf(stderr, "%f %f %f \n", p->pos[X], p->pos[Y], p->pos[Z]);
             glVertex3dv(particles[i].pos.unpack());
             active_particles++;
         }

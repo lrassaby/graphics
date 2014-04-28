@@ -7,6 +7,8 @@ ParticleSystem::ParticleSystem()
     max_particles = 1000;
     last_used_particle = 0;
     spread = 1.0f; 
+    radius = 2.0;
+    srand (time(NULL));
 }
 
 void ParticleSystem::initialize()
@@ -203,9 +205,9 @@ void ParticleSystem::bindShaders()
 
 Vector ParticleSystem::getRandVector()
 {
-    float phi = (rand() / RAND_MAX )* 2 * M_PI;
-    float costheta = (2 * (rand() / RAND_MAX)) - 1;
-    float u = (rand() / RAND_MAX);
+    float phi = (rand() / (float)RAND_MAX) * 2 * M_PI;
+    float costheta = (2 * (rand() / (float)RAND_MAX)) - 1;
+    float u = (rand() / (float)RAND_MAX);
 
     float theta = acos(costheta);
     float r = radius * pow(u, (1/3));
