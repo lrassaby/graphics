@@ -1,13 +1,14 @@
 #include "particle_system.h"
 #include "shader.h"
+#include <stdio.h>
 #include <algorithm>
 
 ParticleSystem::ParticleSystem()
 {
-    max_particles = 1000;
+    max_particles = 10000;
     last_used_particle = 0;
     spread = 1.0f; 
-    radius = 2.0;
+    radius = 1.0f;
     srand (time(NULL));
 }
 
@@ -20,7 +21,7 @@ void ParticleSystem::initialize()
     Shader manager;
     particles.resize(max_particles);
 
-    #if 0
+    //#if 0
     getCameraMatrices();
 
     // Accept fragment if it closer to the camera than the former one
@@ -61,7 +62,7 @@ void ParticleSystem::initialize()
     // Initialize with empty (NULL) buffer : it will be updated later, each frame.
     glBufferData(GL_ARRAY_BUFFER, max_particles * 4 * sizeof(GLubyte), NULL, GL_STREAM_DRAW);
 
-    #endif
+    //#endif
 }
 
 void ParticleSystem::setGPUBuffers(Particle *particle, int particle_index)
@@ -81,7 +82,7 @@ void ParticleSystem::setGPUBuffers(Particle *particle, int particle_index)
 void ParticleSystem::drawParticles() 
 {
     int current_time = glutGet(GLUT_ELAPSED_TIME);
-    elapsed = current_time - last_time;
+    elapsed = (current_time - last_time) * 0.001f;
     last_time = current_time;
 
     getCameraMatrices();
@@ -97,15 +98,19 @@ void ParticleSystem::drawParticles()
  */
  int ParticleSystem::findUnusedParticle()
  {
+    //fprintf(stderr, "last_used_particle %d\n", last_used_particle);
     for(int i = last_used_particle; i < max_particles; i++) {
         if (particles[i].lifetime < 0) {
+            //fprintf(stderr, "first loop %d\n", i);
             last_used_particle = i;
             return i;
         }
     }
     for(int i = 0; i < last_used_particle; i++) {
-    	if (particles[i].lifetime < 0) {
-            last_used_particle = i;
+       /// fprintf(stderr, "%f\n", particles[i].lifetime);
+    	if (particles[i].lifetime <= 0) {
+            //fprintf(stderr, "second loop\n");
+                last_used_particle = i;
             return i;
         }
     }

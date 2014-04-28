@@ -4,7 +4,7 @@
 
 Fountain::Fountain()
 {
-    max_particles = 1000;    
+    max_particles = 10000;
     vertex_shader = "particle.vert"; 
     fragment_shader = "particle.frag"; 
     spread = 1.0f; 
@@ -14,16 +14,17 @@ Fountain::~Fountain(){}
 
 void Fountain::createNewParticles()
 {
-    int newparticles = elapsed * 10;
-    if (newparticles > 160) { 
-        newparticles = 160;
+    int newparticles = elapsed * 100;
+    if (newparticles > 1600) { 
+        newparticles = 1600;
     }
     for (int i = 0; i < newparticles; i++) {
         int particle_index = findUnusedParticle();
+        //fprintf(stdout, "index %d\n", particle_index);
         particles[particle_index].lifetime = 5.0f;
-        particles[particle_index].pos = Point(0, 0, -5.0);
+        particles[particle_index].pos = Point(0, 0, 0);
 
-        Vector main_direction(0.0, 10.0, 0.0);
+        Vector main_direction(0.0, 12.0, 0.0);
         Vector rand_direction = getRandVector();
 
         particles[particle_index].speed = main_direction + rand_direction * spread;
@@ -50,15 +51,16 @@ void Fountain::computeParticles()
         //fprintf(stderr, "before %d pos: %f %f %f \n", i, p->pos[X], p->pos[Y], p->pos[Z]);
 
         if (p->lifetime > 0.0f) {
-            fprintf(stderr, "elapsed %d\n", elapsed);
-            p->lifetime -= elapsed / 1000;
+            //fprintf(stderr, "elapsed %d\n", elapsed);
+            p->lifetime -= elapsed;
+            //fprintf(stderr, "index %d lifetime %f\n", i, p->lifetime);
             if (p->lifetime > 0.0f) {
-                p->speed = p->speed + (gravity * (elapsed * 0.001f));
-                fprintf(stderr, "speed: %f\n", p->speed[Y]);
-                p->pos = p->pos + (p->speed * elapsed / 1000);
+                p->speed = p->speed + (gravity * elapsed);
+                //fprintf(stderr, "speed: %f\n", p->speed[Y]);
+                p->pos = p->pos + (p->speed * elapsed / 10);
                 p->cameradistance = length((p->pos - camera_position));
-                fprintf(stderr, " inside loop %d pos: %f %f %f \n", i, p->pos[X], p->pos[Y], p->pos[Z]);
-                //setGPUBuffers(p, active_particles);
+                //fprintf(stderr, " inside loop %d pos: %f %f %f \n", i, p->pos[X], p->pos[Y], p->pos[Z]);
+                setGPUBuffers(p, active_particles);
             } else {
                 p->cameradistance = -1.0f; /* particle has just died */
             }

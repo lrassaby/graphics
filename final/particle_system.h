@@ -29,7 +29,7 @@ protected:
     std::string fragment_shader; /* shader set by child class */
     int active_particles;        /* subset of particles that are currently active */
     int last_time;
-    int elapsed;
+    float elapsed;
     float spread;  /* controls randomness spread */
     float radius;
     Point camera_position;
