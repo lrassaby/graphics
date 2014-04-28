@@ -40,7 +40,6 @@ GLuint Shader::loadShader(const char* vertPath, const char* fragPath) {
     const char* fragShaderSrc = fragShaderStr.c_str();
 
     GLint result = GL_FALSE;
-    int logLength;
 
     //compile vertex shader
     glShaderSource(vertShader, 1, &vertShaderSrc, NULL);
@@ -68,10 +67,10 @@ GLuint Shader::loadShader(const char* vertPath, const char* fragPath) {
     glLinkProgram(program);
 
     glGetProgramiv(program, GL_LINK_STATUS, &result);
-    glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logLength);
-    vector<char> programError(logLength > 1 ? logLength : 1);
-    glGetProgramInfoLog(program, logLength, NULL, &programError[0]);
-    cout << &programError[0] << endl;
+    //glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logLength);
+    //vector<char> programError(logLength > 1 ? logLength : 1);
+    glGetProgramInfoLog(program, 1024, NULL, error);
+    cout << error << endl;
 
     glDeleteShader(vertShader);
     glDeleteShader(fragShader);

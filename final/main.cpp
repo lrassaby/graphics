@@ -23,9 +23,6 @@ float obj_pos[] = { 0.0, 0.0, 0.0 };
 
 GLUI *glui;
 
-
-
-
 /* global variables */
 enum SystemType {
 	FOUNTAIN,
@@ -33,13 +30,9 @@ enum SystemType {
 	BUBBLES
 };
 
-
 Fountain fountain;
-
 SystemType current_number;
 ParticleSystem *current_system = &fountain;
-
-
 
 void callbackSystemType (int id) {
 	switch(current_number) {
@@ -52,7 +45,6 @@ void callbackSystemType (int id) {
 			break;
 	}
 }
-
 
 void myGlutIdle(void)
 {
@@ -138,12 +130,12 @@ void myGlutDisplay(void)
 	========================================== */
 void onExit()
 {
+	// TODO: clean up memory, etc
 }
 
 
 int main(int argc, char* argv[])
 {
-	
 	atexit(onExit);
 
 	/****************************************/
@@ -158,6 +150,13 @@ int main(int argc, char* argv[])
 	main_window = glutCreateWindow("Magical Particle Systems");
 	glutDisplayFunc(myGlutDisplay);
 	glutReshapeFunc(myGlutReshape);
+
+	/* Ensure that instancing is supported by GPU */	
+    if (!GL_ARB_draw_instanced || !GL_ARB_instanced_arrays) {
+        fprintf(stderr, "This GPU does not support instancing.");
+        onExit();
+        exit(-1);
+    }
 
 	/****************************************/
 	/*       Set up OpenGL lighting         */
@@ -195,8 +194,6 @@ int main(int argc, char* argv[])
 	/*         Here's the GLUI code         */
 	/****************************************/
 
-
-
 	//GLUI *glui = GLUI_Master.create_glui("GLUI");
 	glui = GLUI_Master.create_glui_subwindow( main_window, GLUI_SUBWINDOW_BOTTOM );
 
@@ -206,13 +203,13 @@ int main(int argc, char* argv[])
     view_rot->set_spin( 1.0 );
     // Navigate our scene
     new GLUI_Column( object_panel, false );
-    GLUI_Translation *trans_x =  new GLUI_Translation(object_panel, "Objects X", GLUI_TRANSLATION_X, &obj_pos[0] );
+    GLUI_Translation *trans_x =  new GLUI_Translation(object_panel, "Objects X", GLUI_TRANSLATION_X, &obj_pos[0]);
     trans_x->set_speed( .1 );
     new GLUI_Column( object_panel, false );
-    GLUI_Translation *trans_y =  new GLUI_Translation( object_panel, "Objects Y", GLUI_TRANSLATION_Y, &obj_pos[1] );
+    GLUI_Translation *trans_y =  new GLUI_Translation(object_panel, "Objects Y", GLUI_TRANSLATION_Y, &obj_pos[1]);
     trans_y->set_speed( .1 );
     new GLUI_Column( object_panel, false );
-    GLUI_Translation *trans_z =  new GLUI_Translation( object_panel, "Objects Z", GLUI_TRANSLATION_Z, &obj_pos[2] );
+    GLUI_Translation *trans_z =  new GLUI_Translation(object_panel, "Objects Z", GLUI_TRANSLATION_Z, &obj_pos[2]);
     trans_z->set_speed( .1 );
     new GLUI_Column( glui, false );
     GLUI_Panel *particles_panel = glui->add_panel("Particles");
