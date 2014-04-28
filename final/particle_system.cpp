@@ -8,7 +8,7 @@ ParticleSystem::ParticleSystem()
     max_particles = 10000;
     last_used_particle = 0;
     spread = 1.0f; 
-    radius = 1.0f;
+    radius = 1.5f;
     srand (time(NULL));
 }
 
@@ -21,7 +21,6 @@ void ParticleSystem::initialize()
     Shader manager;
     particles.resize(max_particles);
 
-    //#if 0
     getCameraMatrices();
 
     // Accept fragment if it closer to the camera than the former one
@@ -61,8 +60,6 @@ void ParticleSystem::initialize()
     glBindBuffer(GL_ARRAY_BUFFER, particles_color_buffer);
     // Initialize with empty (NULL) buffer : it will be updated later, each frame.
     glBufferData(GL_ARRAY_BUFFER, max_particles * 4 * sizeof(GLubyte), NULL, GL_STREAM_DRAW);
-
-    //#endif
 }
 
 void ParticleSystem::setGPUBuffers(Particle *particle, int particle_index)
@@ -98,18 +95,14 @@ void ParticleSystem::drawParticles()
  */
  int ParticleSystem::findUnusedParticle()
  {
-    //fprintf(stderr, "last_used_particle %d\n", last_used_particle);
     for(int i = last_used_particle; i < max_particles; i++) {
         if (particles[i].lifetime < 0) {
-            //fprintf(stderr, "first loop %d\n", i);
             last_used_particle = i;
             return i;
         }
     }
     for(int i = 0; i < last_used_particle; i++) {
-       /// fprintf(stderr, "%f\n", particles[i].lifetime);
     	if (particles[i].lifetime <= 0) {
-            //fprintf(stderr, "second loop\n");
                 last_used_particle = i;
             return i;
         }
@@ -117,14 +110,13 @@ void ParticleSystem::drawParticles()
     return 0; // All particles are taken, override the first one
 }
 
-void ParticleSystem::SortParticles(){
+void ParticleSystem::sortParticles()
+{
     std::sort(&particles[0], &particles[max_particles]);
 }
 
 void ParticleSystem::bindShaders()
 {
-    position_size_data = new GLfloat[max_particles * 4];
-    color_data = new GLubyte[max_particles * 4];
     /* Update the buffers that OpenGL uses for rendering */
 
     glBindBuffer(GL_ARRAY_BUFFER, particles_position_buffer);

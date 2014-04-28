@@ -39,7 +39,7 @@ protected:
     Matrix model_projection;
 
     int findUnusedParticle();
-    void SortParticles();
+    void sortParticles();
     void bindShaders();
     void setGPUBuffers(Particle *particle, int particle_index);
     Vector getRandVector();
