@@ -51,11 +51,11 @@ void Fountain::computeParticles()
 
         if (p->lifetime > 0.0f) {
             fprintf(stderr, "elapsed %d\n", elapsed);
-            p->lifetime -= elapsed / 100;
+            p->lifetime -= elapsed / 1000;
             if (p->lifetime > 0.0f) {
-                p->speed = p->speed + (gravity * (elapsed * 0.1f));
+                p->speed = p->speed + (gravity * (elapsed * 0.001f));
                 fprintf(stderr, "speed: %f\n", p->speed[Y]);
-                p->pos = p->pos + (p->speed * elapsed / 100);
+                p->pos = p->pos + (p->speed * elapsed / 1000);
                 p->cameradistance = length((p->pos - camera_position));
                 fprintf(stderr, " inside loop %d pos: %f %f %f \n", i, p->pos[X], p->pos[Y], p->pos[Z]);
                 //setGPUBuffers(p, active_particles);
