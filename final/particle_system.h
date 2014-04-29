@@ -36,7 +36,7 @@ protected:
 
     Matrix model_view;
     Matrix projection;
-    Matrix model_projection;
+    GLfloat model_projection[16];
 
     int findDeadParticle();
     void sortParticles();

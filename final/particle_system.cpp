@@ -149,18 +149,9 @@ void ParticleSystem::bindShaders()
 
     // Same as the billboards tutorial
     glUniform3f(CameraRight_worldspace_ID, -model_view(0, 0), -model_view(1, 0), -model_view(2, 0));
-    glUniform3f(CameraUp_worldspace_ID, model_view(0, 1), model_view(1, 1), model_view(2, 1));
+    glUniform3f(CameraUp_worldspace_ID, -model_view(0, 1), -model_view(1, 1), -model_view(2, 1));
 
-    /* TODO: fix this so that it makes sense...either change the convention
-     * in the shader or else change the order of the model_projection matrix
-     */
-    GLfloat test[16];
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            test[(4 * i) + j] = model_projection(i, j);
-        }
-    }
-    glUniformMatrix4fv(ViewProjMatrixID, 1, GL_FALSE, test);
+    glUniformMatrix4fv(ViewProjMatrixID, 1, GL_FALSE, model_projection);
     //glUniformMatrix4fv(ViewProjMatrixID, 1, model_projection.unpack());
 
     // 1rst attribute buffer : vertices
@@ -240,9 +231,18 @@ void ParticleSystem::getCameraMatrices()
 {
     GLfloat mv[16];
     GLfloat p[16];
+    Matrix mvp;
+
     glGetFloatv(GL_MODELVIEW_MATRIX, mv);
     glGetFloatv(GL_PROJECTION_MATRIX, p);
+
     model_view = Matrix(mv);
     projection = Matrix(p);
-    model_projection = projection * model_view;
+    mvp = projection * model_view;
+
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            model_projection[(4 * i) + j] = mvp(i, j);
+        }
+    }
 }

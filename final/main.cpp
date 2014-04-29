@@ -100,31 +100,24 @@ void drawAxis(){
 void myGlutDisplay(void)
 {
 	// Clear the buffer of colors in each bit plane.
-	// bit plane - A set of bits that are on or off (Think of a black and white image)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
-	// here we are moving the camera back by 0.5 on the z-axi/mains
-	// TODO: Implement translation, scaling, rotation
-
-	
 	//allow for user controlled rotation and scaling
-	glTranslatef( obj_pos[0], obj_pos[1]-0.25, -obj_pos[2]-1);
+	glTranslatef( obj_pos[0], obj_pos[1]-0.25, -obj_pos[2]-2.0);
 	glMultMatrixf(view_rotate);
 
-	
 	// In this case, just the drawing of the axes.
-
 	drawAxis();
+
 	// draw the fountain
 	fountain.drawParticles();
+
+	// TODO: delete this when we no longer need it
 	// useful gl dbugging code 
     //int x = glGetError(); 
     //fprintf(stderr, "error code %s\n", gluErrorString(x));
-	
-	// Pop all of these operations off of our model_view stack, thus getting us back
-	// to the default state.
 
 	glutSwapBuffers();
 }
@@ -201,7 +194,7 @@ int main(int argc, char* argv[])
 	/****************************************/
 
 
-	//glPolygonOffset(1, 1);
+	glPolygonOffset(1, 1);
 
 	/****************************************/
 	/*         Here's the GLUI code         */
