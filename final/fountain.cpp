@@ -6,9 +6,9 @@
 Fountain::Fountain()
 {
     max_particles = 10000;
-    vertex_shader = "particle.vert"; 
-    fragment_shader = "particle.frag"; 
-    texture_file = "particle.dds";
+    vertex_shader = "shaders/particle.vert"; 
+    fragment_shader = "shaders/particle.frag"; 
+    texture_file = "shaders/particle.dds";
     spread = 1.0f; 
     radius = 1.5f;
 }
