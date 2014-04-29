@@ -35,7 +35,7 @@ void Fountain::createNewParticles()
         particles[particle_index].color.b = rand() / (float)RAND_MAX;
         particles[particle_index].color.a = rand() / (float)RAND_MAX; 
 
-        particles[particle_index].size = (rand() % 1000) / 2000.0f + 0.1f;
+        particles[particle_index].size = (rand() % 10) / 200.0f + 0.01f;
     }
 }
 

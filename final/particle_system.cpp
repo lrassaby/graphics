@@ -76,7 +76,6 @@ void ParticleSystem::setGPUBuffers(Particle *particle, int particle_index)
     position_size_data[i + Y] = particle->pos[Y];
     position_size_data[i + Z] = particle->pos[Z];
     position_size_data[i + SIZE] = particle->size;
-    //fprintf(stderr, "%i size %f\n", particle_index, position_size_data[i + SIZE]);
 
     color_data[i + R] = particle->color.r * 255;
     color_data[i + G] = particle->color.g * 255;
@@ -91,19 +90,9 @@ void ParticleSystem::drawParticles()
     last_time = current_time;
 
     getCameraMatrices();
-    camera_position = Point(-model_view(0, 3),-model_view(1, 3), -model_view(2, 3));
-
+    camera_position = Point(-model_view(0, 3), -model_view(1, 3), -model_view(2, 3));
     computeParticles();
-
-    
     sortParticles();
-    glBegin(GL_POINTS);
-        for (int i = 0; i < active_particles; i++) {
-            glColor3b(color_data[4 * i + R], color_data[4 * i + G], color_data[4 * i + B]);
-            glVertex3fv(&position_size_data[4 * i]);
-        }
-    glEnd();
-    
     bindShaders();
 }
 
