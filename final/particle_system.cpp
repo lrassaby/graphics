@@ -8,7 +8,8 @@
 
 ParticleSystem::ParticleSystem()
 {
-    max_particles = 10000;
+    m_max_particles = 10000;
+    max_particles = m_max_particles;
     last_used_particle = 0;
     spread = 1.0f; 
     radius = 1.5f;
@@ -23,21 +24,16 @@ void ParticleSystem::initialize()
     position_size_data = new GLfloat[max_particles * 4];
     color_data = new GLubyte[max_particles * 4];
     Shader manager;
-    /* TODO: move to happen every time */
     particles.resize(max_particles);
-
 
     getCameraMatrices();
 
-    // Accept fragment if it closer to the camera than the former one
-
     // Create and compile our GLSL program from the shaders
-    // programID = manager.loadShader(vertex_shader.c_str(), fragment_shader.c_str());
-    programID = manager.loadShader("particle.vert", "particle.frag");
+    programID = manager.loadShader(vertex_shader.c_str(), fragment_shader.c_str());
 
     // Vertex shader
-    CameraRight_worldspace_ID  = glGetUniformLocation(programID, "CameraRight_worldspace");
-    CameraUp_worldspace_ID  = glGetUniformLocation(programID, "CameraUp_worldspace");
+    CameraRight_worldspace_ID = glGetUniformLocation(programID, "CameraRight_worldspace");
+    CameraUp_worldspace_ID = glGetUniformLocation(programID, "CameraUp_worldspace");
     ViewProjMatrixID = glGetUniformLocation(programID, "VP");
 
     // fragment shader
@@ -48,8 +44,7 @@ void ParticleSystem::initialize()
     xyzsID = glGetAttribLocation(programID, "xyzs");
     colorID = glGetAttribLocation(programID, "color");   
     
-
-    texture = loadDDS("demo/tutorial/particle.DDS");
+    texture = loadDDS(texture_file.c_str());
 
     glGenBuffers(1, &billboard_vertex_buffer);
     glBindBuffer(GL_ARRAY_BUFFER, billboard_vertex_buffer);
@@ -90,12 +85,19 @@ void ParticleSystem::drawParticles()
     last_time = current_time;
 
     getCameraMatrices();
-    camera_position = Point(-model_view(0, 3), -model_view(1, 3), -model_view(2, 3));
+    camera_position = Point(-model_view(0, 3), 
+                            -model_view(1, 3), 
+                            -model_view(2, 3));
+
+    if (max_particles != m_max_particles) {
+        max_particles = m_max_particles;
+        particles.resize(max_particles);
+    }
+    
     computeParticles();
     sortParticles();
     bindShaders();
 }
-
 
 /*
  * findUnusedParticle - returns the index of the first dead particle 

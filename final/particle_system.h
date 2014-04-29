@@ -16,8 +16,8 @@ static const GLfloat g_vertex_buffer_data[] ={
 class ParticleSystem
 {
 public:
-    int max_particles;        /* total number of particles */
     float spread;             /* controls randomness spread */
+    int m_max_particles;        /* total number of particles */
 
     ParticleSystem();
     void initialize(); 
@@ -28,6 +28,9 @@ protected:
     std::vector<Particle> particles;
     std::string vertex_shader;   /* shader set by child class */
     std::string fragment_shader; /* shader set by child class */
+    std::string texture_file;
+    
+    int max_particles;
     int active_particles;        /* subset of particles that are currently active */
     int last_time;
     float elapsed;
