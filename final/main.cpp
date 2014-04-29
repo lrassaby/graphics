@@ -36,6 +36,7 @@ enum SystemType {
 
 Fountain fountain;
 SystemType current_number;
+int display_axes = false;
 ParticleSystem *current_system = &fountain;
 
 void callbackSystemType (int id) {
@@ -118,7 +119,9 @@ void myGlutDisplay(void)
 
 	// draw the fountain
 	fountain.drawParticles();
-	drawAxis();
+	if (display_axes) {
+		drawAxis();
+	}
 
 	// TODO: delete this when we no longer need it
 	// useful gl dbugging code 
@@ -256,8 +259,9 @@ int main(int argc, char* argv[])
     (new GLUI_Spinner(direction_panel, "Z", &(current_system->particle_size)))->set_int_limits(1, 100);
     new GLUI_Column( glui, false );
     */
-	glui->add_button("Quit", 0, (GLUI_Update_CB)exit);
+	glui->add_checkbox("Display Axes", &display_axes);
 	glui->add_button("Reset", 0, (GLUI_Update_CB)exit);
+	glui->add_button("Quit", 0, (GLUI_Update_CB)exit);
 
 	glui->set_main_gfx_window(main_window);
 	/* We register the idle callback with GLUI, *not* with GLUT */
