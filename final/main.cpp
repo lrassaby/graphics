@@ -239,9 +239,6 @@ int main(int argc, char* argv[])
     new GLUI_Column( glui, false );
     GLUI_Panel *particles_panel = glui->add_panel("Particles");
 
-	/* TODO: Fix seg faults when changing number of particles by using "new max particles" variable and setting within particle_system.cpp */
-   
-
     (new GLUI_Spinner(particles_panel, "Num particles", &(current_system->m_max_particles)))->set_int_limits(1, 1000000);
     new GLUI_Column( glui, false );
     (new GLUI_Spinner(particles_panel, "Spread", &(current_system->spread)))->set_float_limits(0.1, 10.0);

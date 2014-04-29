@@ -16,7 +16,16 @@ ParticleSystem::ParticleSystem()
     srand (time(NULL));
 }
 
-/* TODO: write destructor to get rid of all data */
+ParticleSystem::~ParticleSystem() 
+{
+    particles.clear();
+    delete [] position_size_data;
+    delete [] color_data;
+    glDeleteBuffers(1, &particles_position_buffer);
+    glDeleteBuffers(1, &billboard_vertex_buffer);
+    glDeleteProgram(programID);
+    glDeleteTextures(1, &texture_ID);
+}
 
 void ParticleSystem::initialize()
 {
@@ -92,6 +101,11 @@ void ParticleSystem::drawParticles()
     if (max_particles != m_max_particles) {
         max_particles = m_max_particles;
         particles.resize(max_particles);
+
+        delete [] position_size_data;
+        delete [] color_data;
+        position_size_data = new GLfloat[max_particles * 4];
+        color_data = new GLubyte[max_particles * 4];
     }
     
     computeParticles();
