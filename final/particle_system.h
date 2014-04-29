@@ -24,7 +24,7 @@ public:
 
     ParticleSystem();
     void initialize(); 
-    ~ParticleSystem() {};
+    ~ParticleSystem();
     void drawParticles();
 
 protected:

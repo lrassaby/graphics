@@ -246,7 +246,6 @@ int main(int argc, char* argv[])
     new GLUI_Column( glui, false );
     GLUI_Panel *particles_panel = glui->add_panel("Particles");
 
-
     (new GLUI_Spinner(particles_panel, "Num particles", &(current_system->m_max_particles)))->set_int_limits(1, 1000000);
     (new GLUI_Spinner(particles_panel, "Spread", &(current_system->spread)))->set_float_limits(0.1, 10.0);
     (new GLUI_Spinner(particles_panel, "Particle Size", &(current_system->particle_size)))->set_int_limits(1, 100);
