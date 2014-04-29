@@ -23,6 +23,7 @@ ParticleSystem::~ParticleSystem()
     delete [] color_data;
     glDeleteBuffers(1, &particles_position_buffer);
     glDeleteBuffers(1, &billboard_vertex_buffer);
+    glDeleteBuffers(1, &particles_color_buffer);
     glDeleteProgram(programID);
     glDeleteTextures(1, &texture_ID);
 }
