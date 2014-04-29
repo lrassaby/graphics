@@ -109,10 +109,10 @@ void myGlutDisplay(void)
 	glMultMatrixf(view_rotate);
 
 	// In this case, just the drawing of the axes.
-	drawAxis();
 
 	// draw the fountain
 	fountain.drawParticles();
+	drawAxis();
 
 	// TODO: delete this when we no longer need it
 	// useful gl dbugging code 
@@ -194,7 +194,7 @@ int main(int argc, char* argv[])
 	/****************************************/
 
 
-	glPolygonOffset(1, 1);
+	//glPolygonOffset(1, 1);
 
 	/****************************************/
 	/*         Here's the GLUI code         */
@@ -220,8 +220,7 @@ int main(int argc, char* argv[])
     new GLUI_Column( glui, false );
     GLUI_Panel *particles_panel = glui->add_panel("Particles");
 
-	/* TODO: Fix seg faults when changing number of particles by using "new max particles" variable and setting within particle_system.cpp */
-    (new GLUI_Spinner(particles_panel, "Num particles", &(current_system->max_particles)))->set_int_limits(1, 1000000);
+    (new GLUI_Spinner(particles_panel, "Num particles", &(current_system->m_max_particles)))->set_int_limits(1, 1000000);
     new GLUI_Column( glui, false );
 	glui->add_button("Quit", 0, (GLUI_Update_CB)exit);
 
@@ -233,10 +232,8 @@ int main(int argc, char* argv[])
 
 	glClearColor(0.0f, 0.0f, 0.2f, 0.0f);
 
-
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
-
 
 	fountain.initialize();
 
@@ -244,5 +241,3 @@ int main(int argc, char* argv[])
 
 	return EXIT_SUCCESS;
 }
-
-
