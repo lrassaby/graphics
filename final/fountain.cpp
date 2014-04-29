@@ -21,7 +21,7 @@ void Fountain::createNewParticles()
         newparticles = max_particles / 2.0;
     }
     for (int i = 0; i < newparticles; i++) {
-        int particle_index = findUnusedParticle();
+        int particle_index = findDeadParticle();
         particles[particle_index].lifetime = 5.0f;
         particles[particle_index].pos = Point(0, 0, 0);
 

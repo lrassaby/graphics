@@ -38,7 +38,7 @@ protected:
     Matrix projection;
     Matrix model_projection;
 
-    int findUnusedParticle();
+    int findDeadParticle();
     void sortParticles();
     void bindShaders();
     void setGPUBuffers(Particle *particle, int particle_index);

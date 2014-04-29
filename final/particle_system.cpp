@@ -26,6 +26,7 @@ void ParticleSystem::initialize()
     /* TODO: move to happen every time */
     particles.resize(max_particles);
 
+
     getCameraMatrices();
 
     // Accept fragment if it closer to the camera than the former one
@@ -33,11 +34,16 @@ void ParticleSystem::initialize()
     // Create and compile our GLSL program from the shaders
     // programID = manager.loadShader(vertex_shader.c_str(), fragment_shader.c_str());
     programID = LoadShaders("demo/tutorial/Particle.vertexshader", "demo/tutorial/Particle.fragmentshader");
+    /*
+    programID = manager.loadShader("particle.vert", "particle.frag");
+    fprintf(stderr, "programID %d \n", programID);
+    */
 
     // Vertex shader
     CameraRight_worldspace_ID  = glGetUniformLocation(programID, "CameraRight_worldspace");
     CameraUp_worldspace_ID  = glGetUniformLocation(programID, "CameraUp_worldspace");
     ViewProjMatrixID = glGetUniformLocation(programID, "VP");
+    printf("%d\n", CameraRight_worldspace_ID);
 
     // fragment shader
     texture_ID  = glGetUniformLocation(programID, "myTextureSampler");
@@ -75,6 +81,7 @@ void ParticleSystem::setGPUBuffers(Particle *particle, int particle_index)
     position_size_data[i + Y] = particle->pos[Y];
     position_size_data[i + Z] = particle->pos[Z];
     position_size_data[i + SIZE] = particle->size;
+    //fprintf(stderr, "%i size %f\n", particle_index, position_size_data[i + SIZE]);
 
     color_data[i + R] = particle->color.r * 255;
     color_data[i + G] = particle->color.g * 255;
@@ -101,14 +108,15 @@ void ParticleSystem::drawParticles()
         }
     glEnd();
     
-    //bindShaders();
+    bindShaders();
 }
 
 
 /*
- * Finds a Particle in ParticlesContainer which isn't used yet. (i.e. life < 0);
+ * findUnusedParticle - returns the index of the first dead particle 
+ * (i.e. life < 0) in the particles vector.
  */
- int ParticleSystem::findUnusedParticle()
+ int ParticleSystem::findDeadParticle()
  {
     for(int i = last_used_particle; i < max_particles; i++) {
         if (particles[i].lifetime < 0) {
@@ -133,7 +141,6 @@ void ParticleSystem::sortParticles()
 void ParticleSystem::bindShaders()
 {
     /* Update the buffers that OpenGL uses for rendering */
-
     glBindBuffer(GL_ARRAY_BUFFER, particles_position_buffer);
     glBufferData(GL_ARRAY_BUFFER, max_particles * 4 * sizeof(GLfloat), NULL, GL_STREAM_DRAW); // Buffer orphaning, a common way to improve streaming perf. See above link for details.
     glBufferSubData(GL_ARRAY_BUFFER, 0, active_particles * sizeof(GLfloat) * 4, position_size_data);
