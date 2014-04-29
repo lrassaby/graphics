@@ -18,6 +18,8 @@ class ParticleSystem
 public:
     float spread;             /* controls randomness spread */
     int m_max_particles;        /* total number of particles */
+    Vector main_direction;
+    int particle_size;
 
     ParticleSystem();
     void initialize(); 

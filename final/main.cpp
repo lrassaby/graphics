@@ -241,11 +241,23 @@ int main(int argc, char* argv[])
 
     (new GLUI_Spinner(particles_panel, "Num particles", &(current_system->m_max_particles)))->set_int_limits(1, 1000000);
     new GLUI_Column( glui, false );
-    (new GLUI_Spinner(particles_panel, "Spread", &(current_system->spread)))->set_float_limits(0.0, 10.0);
+    (new GLUI_Spinner(particles_panel, "Spread", &(current_system->spread)))->set_float_limits(0.1, 10.0);
     new GLUI_Column( glui, false );
-	glui->add_button("Quit", 0, (GLUI_Update_CB)exit);
+    (new GLUI_Spinner(particles_panel, "Particle Size", &(current_system->particle_size)))->set_int_limits(1, 100);
+    new GLUI_Column( glui, false );
 
-	/* TODO: reset button */
+
+    /*
+    GLUI_Panel *direction_panel = glui->add_panel("Main Direction");
+    (new GLUI_Spinner(direction_panel, "X", &(current_system->main_direction.unpack()[0]))->set_float_limits(1, 100);
+    new GLUI_Column( glui, false );
+    (new GLUI_Spinner(direction_panel, "Y", &(current_system->particle_size)))->set_int_limits(1, 100);
+    new GLUI_Column( glui, false );
+    (new GLUI_Spinner(direction_panel, "Z", &(current_system->particle_size)))->set_int_limits(1, 100);
+    new GLUI_Column( glui, false );
+    */
+	glui->add_button("Quit", 0, (GLUI_Update_CB)exit);
+	glui->add_button("Reset", 0, (GLUI_Update_CB)exit);
 
 	glui->set_main_gfx_window(main_window);
 	/* We register the idle callback with GLUI, *not* with GLUT */
