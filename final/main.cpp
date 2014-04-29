@@ -9,9 +9,11 @@
 #include <string.h>
 #include <iostream>
 #include <fstream>
+#include <GL/glew.h>
 #include <GL/glui.h>
 #include <math.h>
 #include "fountain.h"
+
 
 /* These are the live variables passed into GLUI */
 int main_window;
@@ -113,17 +115,16 @@ void myGlutDisplay(void)
 
 	// here we are moving the camera back by 0.5 on the z-axi/mains
 	// TODO: Implement translation, scaling, rotation
-	
-	glTranslatef(0, 0, -0.5);
+
 	
 	//allow for user controlled rotation and scaling
-	glTranslatef( obj_pos[0], obj_pos[1]-0.25, -obj_pos[2]-0.5);
+	glTranslatef( obj_pos[0], obj_pos[1]-0.25, -obj_pos[2]-1);
 	glMultMatrixf(view_rotate);
+
 	
-
 	// In this case, just the drawing of the axes.
-	drawAxis();
 
+	drawAxis();
 	// draw the fountain
 	fountain.drawParticles();
 	
@@ -143,8 +144,9 @@ void onExit()
 
 int main(int argc, char* argv[])
 {
-	
+
 	atexit(onExit);
+
 
 	/****************************************/
 	/*   Initialize GLUT and create window  */
@@ -155,16 +157,29 @@ int main(int argc, char* argv[])
 	glutInitWindowPosition(50, 50);
 	glutInitWindowSize(500, 500);
 
+
 	main_window = glutCreateWindow("Magical Particle Systems");
 	glutDisplayFunc(myGlutDisplay);
 	glutReshapeFunc(myGlutReshape);
 
+
+	if (glewInit() != GLEW_OK) {
+		fprintf(stderr, "Failed to initialize GLEW\n");
+		return -1;
+	}
+
+	if (!GLEW_ARB_draw_instanced || !GLEW_ARB_instanced_arrays){
+        fprintf(stderr, "Your GPU does not support instancing !");
+        getchar();
+        return -1;
+    }
 	/****************************************/
 	/*       Set up OpenGL lighting         */
 	/****************************************/
 
 	// Essentially set the background color of the 3D scene.
-	glClearColor(0.1, 0.1, 0.1, 1.0);
+	//glClearColor(0.1, 0.1, 0.1, 1.0);
+	/*
 	glShadeModel(GL_FLAT);
 
 	GLfloat light_pos0[] = { 0.0f, 0.0f, 1.0f, 0.0f };
@@ -181,15 +196,14 @@ int main(int argc, char* argv[])
 
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
+	*/
 
 	/****************************************/
 	/*          Enable z-buferring          */
 	/****************************************/
 
-	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LESS);
 
-	glPolygonOffset(1, 1);
+	//glPolygonOffset(1, 1);
 
 	/****************************************/
 	/*         Here's the GLUI code         */
@@ -227,6 +241,11 @@ int main(int argc, char* argv[])
 	glui->set_main_gfx_window(main_window);
 	/* We register the idle callback with GLUI, *not* with GLUT */
 	GLUI_Master.set_glutIdleFunc(myGlutIdle);
+
+	glClearColor(0.0f, 0.0f, 0.2f, 0.0f);
+
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
 
 
 	fountain.initialize();

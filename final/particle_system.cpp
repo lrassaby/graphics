@@ -3,6 +3,9 @@
 #include <stdio.h>
 #include <algorithm>
 
+#include "common/texture.hpp"
+#include "common/shader.hpp"
+
 ParticleSystem::ParticleSystem()
 {
     max_particles = 10000;
@@ -12,13 +15,15 @@ ParticleSystem::ParticleSystem()
     srand (time(NULL));
 }
 
+/* TODO: write destructor to get rid of all data */
+
 void ParticleSystem::initialize()
 {
     /* TODO: set up camera position...to set in particle system */
-    last_time = glutGet(GLUT_ELAPSED_TIME);
     position_size_data = new GLfloat[max_particles * 4];
     color_data = new GLubyte[max_particles * 4];
     Shader manager;
+    /* TODO: move to happen every time */
     particles.resize(max_particles);
 
     getCameraMatrices();
@@ -27,7 +32,7 @@ void ParticleSystem::initialize()
 
     // Create and compile our GLSL program from the shaders
     // programID = manager.loadShader(vertex_shader.c_str(), fragment_shader.c_str());
-    programID = manager.loadShader("particle.vert", "particle.frag");
+    programID = LoadShaders("demo/tutorial/Particle.vertexshader", "demo/tutorial/Particle.fragmentshader");
 
     // Vertex shader
     CameraRight_worldspace_ID  = glGetUniformLocation(programID, "CameraRight_worldspace");
@@ -35,7 +40,7 @@ void ParticleSystem::initialize()
     ViewProjMatrixID = glGetUniformLocation(programID, "VP");
 
     // fragment shader
-    TextureID  = glGetUniformLocation(programID, "myTextureSampler");
+    texture_ID  = glGetUniformLocation(programID, "myTextureSampler");
 
     // Get a handle for our buffers
     squareVerticesID = glGetAttribLocation(programID, "squareVertices");
@@ -43,7 +48,7 @@ void ParticleSystem::initialize()
     colorID = glGetAttribLocation(programID, "color");   
     
 
-    //Texture = loadDDS("particle.DDS");
+    texture = loadDDS("demo/tutorial/particle.DDS");
 
     glGenBuffers(1, &billboard_vertex_buffer);
     glBindBuffer(GL_ARRAY_BUFFER, billboard_vertex_buffer);
@@ -60,6 +65,7 @@ void ParticleSystem::initialize()
     glBindBuffer(GL_ARRAY_BUFFER, particles_color_buffer);
     // Initialize with empty (NULL) buffer : it will be updated later, each frame.
     glBufferData(GL_ARRAY_BUFFER, max_particles * 4 * sizeof(GLubyte), NULL, GL_STREAM_DRAW);
+    last_time = glutGet(GLUT_ELAPSED_TIME);
 }
 
 void ParticleSystem::setGPUBuffers(Particle *particle, int particle_index)
@@ -70,10 +76,10 @@ void ParticleSystem::setGPUBuffers(Particle *particle, int particle_index)
     position_size_data[i + Z] = particle->pos[Z];
     position_size_data[i + SIZE] = particle->size;
 
-    color_data[i + R] = particle->color.r;
-    color_data[i + G] = particle->color.g;
-    color_data[i + B] = particle->color.b;
-    color_data[i + A] = particle->color.a;
+    color_data[i + R] = particle->color.r * 255;
+    color_data[i + G] = particle->color.g * 255;
+    color_data[i + B] = particle->color.b * 255;
+    color_data[i + A] = particle->color.a * 255;
 }
 
 void ParticleSystem::drawParticles() 
@@ -83,9 +89,18 @@ void ParticleSystem::drawParticles()
     last_time = current_time;
 
     getCameraMatrices();
+    camera_position = Point(-model_view(0, 3),-model_view(1, 3), -model_view(2, 3));
 
-    camera_position = Point(model_view(0, 3), model_view(1, 3), model_view(2, 3));
     computeParticles();
+    
+    sortParticles();
+    glBegin(GL_POINTS);
+        for (int i = 0; i < active_particles; i++) {
+            glColor3b(color_data[4 * i + R], color_data[4 * i + G], color_data[4 * i + B]);
+            glVertex3fv(&position_size_data[4 * i]);
+        }
+    glEnd();
+    
     //bindShaders();
 }
 
@@ -134,10 +149,10 @@ void ParticleSystem::bindShaders()
     glUseProgram(programID);
 
     // Bind our texture in Texture Unit 0
-    //glActiveTexture(GL_TEXTURE0);
-    //glBindTexture(GL_TEXTURE_2D, Texture);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture);
     // Set our "myTextureSampler" sampler to user Texture Unit 0
-    //glUniform1i(TextureID, 0);
+    glUniform1i(texture_ID, 0);
 
     // Same as the billboards tutorial
     glUniform3f(CameraRight_worldspace_ID, model_view(0, 0), model_view(1, 0), model_view(2, 0));

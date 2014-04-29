@@ -2,6 +2,7 @@
 #include <GL/glui.h>
 #include <stdlib.h>
 
+
 Fountain::Fountain()
 {
     max_particles = 10000;
@@ -44,24 +45,21 @@ void Fountain::computeParticles()
     Vector gravity(0.0f, -9.81f, 0.0f);
 
     createNewParticles();
-    glBegin(GL_POINTS); 
     for (int i = 0; i < max_particles; i++) {
         Particle *p = &particles[i];
 
         if (p->lifetime > 0.0f) {
-        glColor3f(p->color.r, p->color.g, p->color.b);
             p->lifetime -= elapsed;
             if (p->lifetime > 0.0f) {
                 p->speed = p->speed + (gravity * elapsed);
                 p->pos = p->pos + (p->speed * elapsed / 10);
                 p->cameradistance = length((p->pos - camera_position));
+                //fprintf(stderr, "cameradistance %f\n", p->cameradistance);
                 setGPUBuffers(p, active_particles);
             } else {
                 p->cameradistance = -1.0f; /* particle has just died */
             }
-            glVertex3dv(particles[i].pos.unpack());
             active_particles++;
         }
     }
-    glEnd();
 }

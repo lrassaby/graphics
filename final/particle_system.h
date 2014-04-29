@@ -56,7 +56,8 @@ private:
     GLuint CameraRight_worldspace_ID;
     GLuint CameraUp_worldspace_ID;
     GLuint ViewProjMatrixID;
-    GLuint TextureID;
+    GLuint texture;
+    GLuint texture_ID;
     GLuint squareVerticesID;
     GLuint xyzsID;
     GLuint colorID;
