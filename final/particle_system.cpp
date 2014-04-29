@@ -33,17 +33,12 @@ void ParticleSystem::initialize()
 
     // Create and compile our GLSL program from the shaders
     // programID = manager.loadShader(vertex_shader.c_str(), fragment_shader.c_str());
-    programID = LoadShaders("demo/tutorial/Particle.vertexshader", "demo/tutorial/Particle.fragmentshader");
-    /*
     programID = manager.loadShader("particle.vert", "particle.frag");
-    fprintf(stderr, "programID %d \n", programID);
-    */
 
     // Vertex shader
     CameraRight_worldspace_ID  = glGetUniformLocation(programID, "CameraRight_worldspace");
     CameraUp_worldspace_ID  = glGetUniformLocation(programID, "CameraUp_worldspace");
     ViewProjMatrixID = glGetUniformLocation(programID, "VP");
-    printf("%d\n", CameraRight_worldspace_ID);
 
     // fragment shader
     texture_ID  = glGetUniformLocation(programID, "myTextureSampler");
@@ -99,6 +94,7 @@ void ParticleSystem::drawParticles()
     camera_position = Point(-model_view(0, 3),-model_view(1, 3), -model_view(2, 3));
 
     computeParticles();
+
     
     sortParticles();
     glBegin(GL_POINTS);
@@ -145,6 +141,7 @@ void ParticleSystem::bindShaders()
     glBufferData(GL_ARRAY_BUFFER, max_particles * 4 * sizeof(GLfloat), NULL, GL_STREAM_DRAW); // Buffer orphaning, a common way to improve streaming perf. See above link for details.
     glBufferSubData(GL_ARRAY_BUFFER, 0, active_particles * sizeof(GLfloat) * 4, position_size_data);
 
+
     glBindBuffer(GL_ARRAY_BUFFER, particles_color_buffer);
     glBufferData(GL_ARRAY_BUFFER, max_particles * 4 * sizeof(GLubyte), NULL, GL_STREAM_DRAW); // Buffer orphaning, a common way to improve streaming perf. See above link for details.
     glBufferSubData(GL_ARRAY_BUFFER, 0, active_particles * sizeof(GLubyte) * 4, color_data);
@@ -162,10 +159,20 @@ void ParticleSystem::bindShaders()
     glUniform1i(texture_ID, 0);
 
     // Same as the billboards tutorial
-    glUniform3f(CameraRight_worldspace_ID, model_view(0, 0), model_view(1, 0), model_view(2, 0));
+    glUniform3f(CameraRight_worldspace_ID, -model_view(0, 0), -model_view(1, 0), -model_view(2, 0));
     glUniform3f(CameraUp_worldspace_ID, model_view(0, 1), model_view(1, 1), model_view(2, 1));
 
-    glUniformMatrix4dv(ViewProjMatrixID, 1, GL_FALSE, model_projection.unpack());
+    /* TODO: fix this so that it makes sense...either change the convention
+     * in the shader or else change the order of the model_projection matrix
+     */
+    GLfloat test[16];
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            test[(4 * i) + j] = model_projection(i, j);
+        }
+    }
+    glUniformMatrix4fv(ViewProjMatrixID, 1, GL_FALSE, test);
+    //glUniformMatrix4fv(ViewProjMatrixID, 1, model_projection.unpack());
 
     // 1rst attribute buffer : vertices
     glEnableVertexAttribArray(squareVerticesID);
@@ -216,6 +223,8 @@ void ParticleSystem::bindShaders()
     // for(i in ParticlesCount) : glDrawArrays(GL_TRIANGLE_STRIP, 0, 4),
     // but faster.
     glDrawArraysInstancedARB(GL_TRIANGLE_STRIP, 0, 4, active_particles);
+    //int x = glGetError(); 
+    //fprintf(stderr, "error code %s\n", gluErrorString(x));
 
     glDisableVertexAttribArray(squareVerticesID);
     glDisableVertexAttribArray(xyzsID);

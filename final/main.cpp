@@ -119,6 +119,9 @@ void myGlutDisplay(void)
 	drawAxis();
 	// draw the fountain
 	fountain.drawParticles();
+	// useful gl dbugging code 
+    //int x = glGetError(); 
+    //fprintf(stderr, "error code %s\n", gluErrorString(x));
 	
 	// Pop all of these operations off of our model_view stack, thus getting us back
 	// to the default state.
@@ -236,6 +239,7 @@ int main(int argc, char* argv[])
 	GLUI_Master.set_glutIdleFunc(myGlutIdle);
 
 	glClearColor(0.0f, 0.0f, 0.2f, 0.0f);
+
 
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
