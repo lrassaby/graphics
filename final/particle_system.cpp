@@ -20,6 +20,12 @@ ParticleSystem::ParticleSystem()
 
 void ParticleSystem::initialize()
 {
+    gravity_y = gravity[Y];
+    particle_direction[X] = main_direction[X];
+    particle_direction[Y] = main_direction[Y];
+    particle_direction[Z] = main_direction[Z];
+    /* sync data */
+    
     /* TODO: set up camera position...to set in particle system */
     position_size_data = new GLfloat[max_particles * 4];
     color_data = new GLubyte[max_particles * 4];
@@ -80,6 +86,8 @@ void ParticleSystem::setGPUBuffers(Particle *particle, int particle_index)
 
 void ParticleSystem::drawParticles() 
 {
+    gravity = Vector(0.0, gravity_y, 0.0);
+    main_direction = Vector(particle_direction[X], particle_direction[Y], particle_direction[Z]);
     int current_time = glutGet(GLUT_ELAPSED_TIME);
     elapsed = (current_time - last_time) * 0.001f;
     last_time = current_time;

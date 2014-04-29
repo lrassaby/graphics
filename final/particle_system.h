@@ -18,8 +18,9 @@ class ParticleSystem
 public:
     float spread;             /* controls randomness spread */
     int m_max_particles;        /* total number of particles */
-    Vector main_direction;
     int particle_size;
+    float gravity_y;
+    float particle_direction[3];
 
     ParticleSystem();
     void initialize(); 
@@ -27,6 +28,9 @@ public:
     void drawParticles();
 
 protected:
+    Vector gravity;
+    Vector main_direction;
+    
     std::vector<Particle> particles;
     std::string vertex_shader;   /* shader set by child class */
     std::string fragment_shader; /* shader set by child class */

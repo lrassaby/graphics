@@ -13,6 +13,7 @@ Fountain::Fountain()
     particle_size = 10;
     radius = 1.5f;
     main_direction = Vector(0.0, 12.0, 0.0);
+    gravity = Vector(0.0f, -9.81f, 0.0f);
 }
 
 Fountain::~Fountain(){}
@@ -44,7 +45,6 @@ void Fountain::createNewParticles()
 void Fountain::computeParticles()
 {
     active_particles = 0;
-    Vector gravity(0.0f, -9.81f, 0.0f);
 
     createNewParticles();
     for (int i = 0; i < max_particles; i++) {
