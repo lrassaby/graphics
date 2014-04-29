@@ -176,6 +176,13 @@ void ParticleSystem::bindShaders()
     glUniform3f(CameraRight_worldspace_ID, -model_view(0, 0), -model_view(1, 0), -model_view(2, 0));
     glUniform3f(CameraUp_worldspace_ID, -model_view(0, 1), -model_view(1, 1), -model_view(2, 1));
 
+/*
+    GLfloat id[16] = {1, 0, 0, 0,
+                      0, 1, 0, 0,
+                      0, 0, 1, 0,
+                      0, 0, 0, 1};
+                      */
+    //glUniformMatrix4fv(ViewProjMatrixID, 1, GL_FALSE, id);
     glUniformMatrix4fv(ViewProjMatrixID, 1, GL_FALSE, model_projection);
     //glUniformMatrix4fv(ViewProjMatrixID, 1, model_projection.unpack());
 
