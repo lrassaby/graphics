@@ -17,6 +17,7 @@ class ParticleSystem
 {
 public:
     int max_particles;        /* total number of particles */
+    float spread;             /* controls randomness spread */
 
     ParticleSystem();
     void initialize(); 
@@ -30,7 +31,6 @@ protected:
     int active_particles;        /* subset of particles that are currently active */
     int last_time;
     float elapsed;
-    float spread;  /* controls randomness spread */
     float radius;
     Point camera_position;
 

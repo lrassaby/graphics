@@ -27,9 +27,11 @@ GLUI *glui;
 
 /* global variables */
 enum SystemType {
+	PARTICLE_FOUNTAIN,
 	FOUNTAIN,
 	FIRE_FOUNTAIN,
-	BUBBLES
+	BUBBLES,
+	FIREWORKS
 };
 
 Fountain fountain;
@@ -38,12 +40,16 @@ ParticleSystem *current_system = &fountain;
 
 void callbackSystemType (int id) {
 	switch(current_number) {
+		case PARTICLE_FOUNTAIN:
+			break;
 		case FOUNTAIN:
 			current_system = &fountain;	
 			break;
 		case FIRE_FOUNTAIN:
 			break;
 		case BUBBLES:
+			break;
+		case FIREWORKS:
 			break;
 	}
 }
@@ -203,9 +209,19 @@ int main(int argc, char* argv[])
 	//GLUI *glui = GLUI_Master.create_glui("GLUI");
 	glui = GLUI_Master.create_glui_subwindow( main_window, GLUI_SUBWINDOW_BOTTOM );
 
-	GLUI_Panel *object_panel = glui->add_panel("Objects");
+		
+    GLUI_Panel *particle_systems= glui->add_panel("Particle Systems");
+	GLUI_RadioGroup *selected = glui->add_radiogroup_to_panel(particle_systems, (int*)(&current_number), 3, callbackSystemType);
+	glui->add_radiobutton_to_group(selected, "Particle Fountain");
+	glui->add_radiobutton_to_group(selected, "Fountain");
+	glui->add_radiobutton_to_group(selected, "Fire Fountain");
+	glui->add_radiobutton_to_group(selected, "Bubbles");
+	glui->add_radiobutton_to_group(selected, "Fireworks");
+    new GLUI_Column( glui, false );
 
-    GLUI_Rotation *view_rot = new GLUI_Rotation(object_panel, "Objects", view_rotate );
+	
+	GLUI_Panel *object_panel = glui->add_panel("Objects");
+	GLUI_Rotation *view_rot = new GLUI_Rotation(object_panel, "Objects", view_rotate );
     view_rot->set_spin( 1.0 );
     // Navigate our scene
     new GLUI_Column( object_panel, false );
@@ -221,7 +237,11 @@ int main(int argc, char* argv[])
     GLUI_Panel *particles_panel = glui->add_panel("Particles");
 
 	/* TODO: Fix seg faults when changing number of particles by using "new max particles" variable and setting within particle_system.cpp */
+   
+
     (new GLUI_Spinner(particles_panel, "Num particles", &(current_system->max_particles)))->set_int_limits(1, 1000000);
+    new GLUI_Column( glui, false );
+    (new GLUI_Spinner(particles_panel, "Spread", &(current_system->spread)))->set_float_limits(0.0, 10.0);
     new GLUI_Column( glui, false );
 	glui->add_button("Quit", 0, (GLUI_Update_CB)exit);
 
