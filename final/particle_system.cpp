@@ -9,6 +9,7 @@
 
 ParticleSystem::ParticleSystem()
 {
+    initialized = false;
     m_max_particles = 10000;
     max_particles = m_max_particles;
     last_used_particle = 0;
@@ -19,18 +20,17 @@ ParticleSystem::ParticleSystem()
 
 ParticleSystem::~ParticleSystem() 
 {
+    cleanup();
     particles.clear();
-    delete [] position_size_data;
-    delete [] color_data;
-    glDeleteBuffers(1, &particles_position_buffer);
-    glDeleteBuffers(1, &billboard_vertex_buffer);
-    glDeleteBuffers(1, &particles_color_buffer);
-    glDeleteProgram(programID);
-    glDeleteTextures(1, &texture_ID);
+    if (initialized && system_type != POINTS) {
+        delete [] position_size_data;
+        delete [] color_data;
+    }
 }
 
 void ParticleSystem::initialize()
 {
+    initialized = true;
     Shader manager;
 
     /* sync data */
@@ -146,8 +146,8 @@ void ParticleSystem::drawParticles()
         }
     }
     computeParticles();
-    sortParticles();
     if (system_type != POINTS) {
+        sortParticles();
         bindShaders();
     }
 }
@@ -329,4 +329,13 @@ void ParticleSystem::getCameraMatrices()
                             inverse_model_view[3][1], 
                             inverse_model_view[3][2]);
 
+}
+
+void ParticleSystem::cleanup() 
+{
+    glDeleteBuffers(1, &particles_position_buffer);
+    glDeleteBuffers(1, &billboard_vertex_buffer);
+    glDeleteBuffers(1, &particles_color_buffer);
+    glDeleteProgram(programID);
+    glDeleteTextures(1, &texture_ID);
 }

@@ -21,20 +21,20 @@ Fountain::~Fountain(){}
 
 void Fountain::createNewParticles()
 {
-    int newparticles = elapsed * 1000;
+    int newparticles = (elapsed * max_particles)/(5.0f);
     if (newparticles > max_particles / 2.0) { 
         newparticles = max_particles / 2.0;
     }
     for (int i = 0; i < newparticles; i++) {
         int particle_index = findDeadParticle();
-        particles[particle_index].lifetime = 5.0f;
-        particles[particle_index].pos = Point(0, 0, 0);
+        particles[particle_index].lifetime = 5.0f; // TODO: add to GUI
+        particles[particle_index].pos = Point(0, 0, 0); // TODO: add to GUI
 
         Vector rand_direction = getRandVector();
 
         particles[particle_index].speed = main_direction + rand_direction * spread;
         /* TODO: generate random colors */
-        particles[particle_index].color.r = (rand() / (float)RAND_MAX);
+        particles[particle_index].color.r = rand() / (float)RAND_MAX;
         particles[particle_index].color.g = rand() / (float)RAND_MAX;
         particles[particle_index].color.b = rand() / (float)RAND_MAX;
         particles[particle_index].color.a = rand() / (float)RAND_MAX; 
@@ -46,6 +46,9 @@ void Fountain::createNewParticles()
 void Fountain::computeParticles()
 {
     active_particles = 0;
+    if (system_type == POINTS) {
+        glBegin(GL_POINTS);
+    }
 
     createNewParticles();
     for (int i = 0; i < max_particles; i++) {
@@ -56,13 +59,10 @@ void Fountain::computeParticles()
                 p->speed = p->speed + (gravity * elapsed);
                 p->pos = p->pos + (p->speed * elapsed / 10);
                 p->cameradistance = length((p->pos - camera_position));
-                if (system_type == POINTS) {
-                    glBegin(POINTS);
+                if (system_type == POINTS){
                     glColor3f(p->color.r, p->color.g, p->color.b);
                     glVertex3dv(p->pos.unpack());
-                    glEnd();
-                }
-                else {
+                }  else {
                     setGPUBuffers(p, active_particles);
                 }
             } else {
@@ -70,5 +70,8 @@ void Fountain::computeParticles()
             }
             active_particles++;
         }
+    }
+    if (system_type == POINTS) {
+        glEnd();
     }
 }

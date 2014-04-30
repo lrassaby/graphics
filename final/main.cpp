@@ -30,9 +30,7 @@ GLUI *glui;
 enum SystemType {
 	PARTICLE_FOUNTAIN,
 	FOUNTAIN,
-	FIRE_FOUNTAIN,
-	BUBBLES,
-	FIREWORKS
+	FIRE_FOUNTAIN
 };
 
 Fountain pointfountain(POINTS);
@@ -40,31 +38,51 @@ Fountain fountain(DDS);
 FireFountain firefountain;
 
 SystemType current_number = PARTICLE_FOUNTAIN;
+ParticleSystem *current_system = &pointfountain;
 int display_axes = false;
-ParticleSystem *current_system = &fountain;
+float dir_x, dir_y, dir_z;
+float spread, gravity;
+int num_particles, particle_size;
+
+void getVariables() {
+    dir_x = current_system->particle_direction[X];
+    dir_y = current_system->particle_direction[Y];
+    dir_z = current_system->particle_direction[Z];
+    spread = current_system->spread;
+    num_particles = current_system->m_max_particles;
+    particle_size = current_system->particle_size;
+    gravity = current_system->gravity_y;
+}
+
+void pushVariables() {
+    current_system->particle_direction[X] = dir_x;
+    current_system->particle_direction[Y] = dir_y;
+    current_system->particle_direction[Z] = dir_z;
+    current_system->spread = spread;
+    current_system->m_max_particles = num_particles;
+    current_system->particle_size = particle_size;
+    current_system->gravity_y = gravity;
+}
 
 void callbackSystemType (int id) {
+    current_system->cleanup();
 	switch(current_number) {
 		case PARTICLE_FOUNTAIN:
-			current_system = &fountain;
+			current_system = &pointfountain;
 			break;
 		case FOUNTAIN:
-			current_system = &pointfountain;	
+			current_system = &fountain;	
 			break;
 		case FIRE_FOUNTAIN:
-			current_system = &firefountain;	
-			break;
-		case BUBBLES:
-			current_system = &fountain;	
-			break;
-		case FIREWORKS:
-			current_system = &fountain;	
-			break;
+			current_system = &firefountain;
+            break;	
 		default:
-			current_system = &fountain;	
+			current_system = &pointfountain;	
 			break;
 	}
     current_system->initialize();
+    getVariables();
+    GLUI_Master.sync_live_all();
 }
 
 void myGlutIdle(void)
@@ -130,6 +148,7 @@ void myGlutDisplay(void)
 	// In this case, just the drawing of the axes.
 
 	// draw the fountain
+    pushVariables(); 
 	current_system->drawParticles();
 	if (display_axes) {
 		drawAxis();
@@ -148,9 +167,22 @@ void myGlutDisplay(void)
 	========================================== */
 void onExit()
 {
-	// TODO: clean up memory, etc
+
 }
 
+void reset() {
+    pointfountain = Fountain(POINTS);
+    fountain = Fountain(DDS);
+    firefountain = FireFountain();
+    memset(view_rotate, 0, sizeof(float) * 16);
+    view_rotate[0] = 1;
+    view_rotate[5] = 1;
+    view_rotate[10] = 1;
+    view_rotate[15] = 1;
+    memset(obj_pos, 0, sizeof(float) * 3);
+
+    callbackSystemType(-1);
+}
 
 int main(int argc, char* argv[])
 {
@@ -222,6 +254,7 @@ int main(int argc, char* argv[])
 	/****************************************/
 
 	//GLUI *glui = GLUI_Master.create_glui("GLUI");
+
 	glui = GLUI_Master.create_glui_subwindow( main_window, GLUI_SUBWINDOW_BOTTOM );
 
 		
@@ -230,8 +263,6 @@ int main(int argc, char* argv[])
 	glui->add_radiobutton_to_group(selected, "Particle Fountain");
 	glui->add_radiobutton_to_group(selected, "Fountain");
 	glui->add_radiobutton_to_group(selected, "Fire Fountain");
-	glui->add_radiobutton_to_group(selected, "Bubbles");
-	glui->add_radiobutton_to_group(selected, "Fireworks");
     new GLUI_Column( glui, false );
 
 	
@@ -251,21 +282,21 @@ int main(int argc, char* argv[])
     new GLUI_Column( glui, false );
     GLUI_Panel *particles_panel = glui->add_panel("Particles");
 
-    (new GLUI_Spinner(particles_panel, "Num particles", &(current_system->m_max_particles)))->set_int_limits(1, 1000000);
-    (new GLUI_Spinner(particles_panel, "Spread", &(current_system->spread)))->set_float_limits(0.1, 10.0);
-    (new GLUI_Spinner(particles_panel, "Particle Size", &(current_system->particle_size)))->set_int_limits(1, 100);
-    (new GLUI_Spinner(particles_panel, "Gravity", &(current_system->gravity_y)))->set_float_limits(-50.0, 50.0);
+    (new GLUI_Spinner(particles_panel, "Num particles", &num_particles))->set_int_limits(10, 50000);
+    (new GLUI_Spinner(particles_panel, "Spread", &spread))->set_float_limits(0.1, 10.0);
+    (new GLUI_Spinner(particles_panel, "Particle Size", &particle_size))->set_int_limits(1, 100);
+    (new GLUI_Spinner(particles_panel, "Gravity", &gravity))->set_float_limits(-50.0, 50.0);
     new GLUI_Column( glui, false );
 
 
     GLUI_Panel *direction_panel = glui->add_panel("Main Direction");
-    (new GLUI_Spinner(direction_panel, "X", &(current_system->particle_direction[X])))->set_float_limits(-50.0, 50.0);
-    (new GLUI_Spinner(direction_panel, "Y", &(current_system->particle_direction[Y])))->set_float_limits(-50.0, 50.0);
-    (new GLUI_Spinner(direction_panel, "Z", &(current_system->particle_direction[Z])))->set_float_limits(-50.0, 50.0);
+    (new GLUI_Spinner(direction_panel, "X", &dir_x))->set_float_limits(-50.0, 50.0);
+    (new GLUI_Spinner(direction_panel, "Y", &dir_y))->set_float_limits(-50.0, 50.0);
+    (new GLUI_Spinner(direction_panel, "Z", &dir_z))->set_float_limits(-50.0, 50.0);
     new GLUI_Column( glui, false );
     
 	glui->add_checkbox("Display Axes", &display_axes);
-	glui->add_button("Reset", 0, (GLUI_Update_CB)exit);
+	glui->add_button("Reset", 0, (GLUI_Update_CB)reset);
 	glui->add_button("Quit", 0, (GLUI_Update_CB)exit);
 
 	glui->set_main_gfx_window(main_window);
@@ -278,6 +309,7 @@ int main(int argc, char* argv[])
 	glDepthFunc(GL_LESS);
 
 	current_system->initialize();
+    getVariables();
     GLUI_Master.sync_live_all();
 
 	glutMainLoop();

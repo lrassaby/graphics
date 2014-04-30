@@ -28,6 +28,7 @@ public:
 
     ParticleSystem();
     void initialize(); 
+    void cleanup();
     ~ParticleSystem();
     void drawParticles();
 
@@ -60,6 +61,7 @@ protected:
     virtual void computeParticles(){};
 
 private:
+    bool initialized;
     GLuint billboard_vertex_buffer;
     GLuint particles_position_buffer;
     GLuint particles_color_buffer;
