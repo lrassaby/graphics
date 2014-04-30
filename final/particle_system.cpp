@@ -31,21 +31,21 @@ ParticleSystem::~ParticleSystem()
 
 void ParticleSystem::initialize()
 {
-    if (system_type == POINTS) {
-    } else {
-        Shader manager;
-        gravity_y = gravity[Y];
-        particle_direction[X] = main_direction[X];
-        particle_direction[Y] = main_direction[Y];
-        particle_direction[Z] = main_direction[Z];
-        /* sync data */
+    Shader manager;
 
-        /* TODO: set up camera position...to set in particle system */
+    /* sync data */
+    gravity_y = gravity[Y];
+    particle_direction[X] = main_direction[X];
+    particle_direction[Y] = main_direction[Y];
+    particle_direction[Z] = main_direction[Z];
+
+    /* TODO: set up camera position...to set in particle system */
+    particles.resize(max_particles);
+    getCameraMatrices();
+
+    if (system_type != POINTS) {
         position_size_data = new GLfloat[max_particles * 4];
         color_data = new GLubyte[max_particles * 4];
-        particles.resize(max_particles);
-
-        getCameraMatrices();
 
         // Create and compile our GLSL program from the shaders
         programID = manager.loadShader(vertex_shader.c_str(), fragment_shader.c_str());
@@ -58,21 +58,26 @@ void ParticleSystem::initialize()
         // fragment shader
         texture_ID  = glGetUniformLocation(programID, "myTextureSampler");
 
-        // Get a handle for our buffers
-        if (system_type == DDS) {
-            squareVerticesID = glGetAttribLocation(programID, "squareVertices");
-            xyzsID = glGetAttribLocation(programID, "xyzs");
-        } else if (system_type == IMAGE) {
-            ageID = glGetAttribLocation(programID, "age");
-        }
+        /* get handle for common buffers */
+        squareVerticesID = glGetAttribLocation(programID, "squareVertices");
+        xyzsID = glGetAttribLocation(programID, "xyzs");
         colorID = glGetAttribLocation(programID, "color");
 
+        /* load dds files */
         if (system_type == DDS){
             texture = loadDDS(texture_file.c_str());
         }
+
+        /* load ppm files and initialize extra age buffer */
         else if (system_type == IMAGE) {
+            age_data = new GLubyte[max_particles];
+            ageID = glGetAttribLocation(programID, "age");
             ppm image(texture_file);
             texture = image.createAsTexture();
+            glGenBuffers(1, &particles_age_buffer);
+            glBindBuffer(GL_ARRAY_BUFFER, particles_age_buffer);
+            // Initialize with empty (NULL) buffer : it will be updated later, each frame.
+            glBufferData(GL_ARRAY_BUFFER, max_particles * sizeof(GLubyte), NULL, GL_STREAM_DRAW);
         }
 
         glGenBuffers(1, &billboard_vertex_buffer);
@@ -90,16 +95,9 @@ void ParticleSystem::initialize()
         glBindBuffer(GL_ARRAY_BUFFER, particles_color_buffer);
         // Initialize with empty (NULL) buffer : it will be updated later, each frame.
         glBufferData(GL_ARRAY_BUFFER, max_particles * 4 * sizeof(GLubyte), NULL, GL_STREAM_DRAW);
-
-        glGenBuffers(1, &particles_age_buffer);
-        glBindBuffer(GL_ARRAY_BUFFER, particles_age_buffer);
-        // Initialize with empty (NULL) buffer : it will be updated later, each frame.
-        glBufferData(GL_ARRAY_BUFFER, max_particles * sizeof(GLubyte), NULL, GL_STREAM_DRAW);
-
-
     }
+
     last_time = glutGet(GLUT_ELAPSED_TIME);
-    
 }
 
 void ParticleSystem::setGPUBuffers(Particle *particle, int particle_index)
@@ -132,9 +130,6 @@ void ParticleSystem::drawParticles()
     last_time = current_time;
 
     getCameraMatrices();
-    camera_position = Point(-model_view(0, 3), 
-                            -model_view(1, 3), 
-                            -model_view(2, 3));
 
     if (max_particles != m_max_particles) {
         max_particles = m_max_particles;
@@ -144,8 +139,12 @@ void ParticleSystem::drawParticles()
         delete [] color_data;
         position_size_data = new GLfloat[max_particles * 4];
         color_data = new GLubyte[max_particles * 4];
+
+        if (system_type == IMAGE) {
+            delete [] age_data;
+            age_data = new GLubyte[max_particles];
+        }
     }
-    
     computeParticles();
     sortParticles();
     if (system_type != POINTS) {
@@ -210,18 +209,10 @@ void ParticleSystem::bindShaders()
     glUniform1i(texture_ID, 0);
 
     // Same as the billboards tutorial
-    glUniform3f(CameraRight_worldspace_ID, model_view(0, 0), model_view(1, 0), model_view(2, 0));
-    glUniform3f(CameraUp_worldspace_ID, model_view(0, 1), model_view(1, 1), model_view(2, 1));
+    glUniform3f(CameraRight_worldspace_ID, model_view[0][0], model_view[1][0], model_view[2][0]);
+    glUniform3f(CameraUp_worldspace_ID, model_view[0][1], model_view[1][1], model_view[2][1]);
 
-/*
-    GLfloat id[16] = {1, 0, 0, 0,
-                      0, 1, 0, 0,
-                      0, 0, 1, 0,
-                      0, 0, 0, 1};
-                      */
-    //glUniformMatrix4fv(ViewProjMatrixID, 1, GL_FALSE, id);
-    glUniformMatrix4fv(ViewProjMatrixID, 1, GL_FALSE, model_projection);
-    //glUniformMatrix4fv(ViewProjMatrixID, 1, model_projection.unpack());
+    glUniformMatrix4fv(ViewProjMatrixID, 1, GL_FALSE, &model_projection[0][0]);
 
     // 1rst attribute buffer : vertices
     glEnableVertexAttribArray(squareVerticesID);
@@ -315,22 +306,27 @@ Vector ParticleSystem::getRandVector()
     return Vector(x, y, z);
 }
 
+/*
+ * getCameraMatrices - sets the model_view and model_projection matrices and 
+ * camera_position Point.
+ */
 void ParticleSystem::getCameraMatrices()
 {
     GLfloat mv[16];
     GLfloat p[16];
-    Matrix mvp;
+    glm::mat4 projection;
+    glm::mat4 inverse_model_view;
 
     glGetFloatv(GL_MODELVIEW_MATRIX, mv);
     glGetFloatv(GL_PROJECTION_MATRIX, p);
 
-    model_view = Matrix(mv);
-    projection = Matrix(p);
-    mvp = projection * model_view;
+    model_view = glm::make_mat4(mv);
+    projection = glm::make_mat4(p);
+    model_projection = projection * model_view;
+    inverse_model_view = glm::inverse(model_view);
 
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            model_projection[(4 * i) + j] = mvp(i, j);
-        }
-    }
+    camera_position = Point(inverse_model_view[3][0], 
+                            inverse_model_view[3][1], 
+                            inverse_model_view[3][2]);
+
 }

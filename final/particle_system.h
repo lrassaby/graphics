@@ -4,6 +4,8 @@
 #include <vector>
 #include <string>
 #include <GL/glut.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include "particle.h"
 
 enum particle_type {POINTS, DDS, IMAGE};
@@ -40,15 +42,14 @@ protected:
     std::string texture_file;
     
     int max_particles;
-    int active_particles;        /* subset of particles that are currently active */
+    int active_particles;   /* subset of particles that are currently active */
     int last_time;
     float elapsed;
     float radius;
+    
     Point camera_position;
-
-    Matrix model_view;
-    Matrix projection;
-    GLfloat model_projection[16];
+    glm::mat4 model_view;
+    glm::mat4 model_projection;
 
     int findDeadParticle();
     void sortParticles();
