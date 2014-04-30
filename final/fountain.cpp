@@ -3,9 +3,9 @@
 #include <stdlib.h>
 
 
-Fountain::Fountain()
+Fountain::Fountain(particle_type system_type)
 {
-    system_type = DDS;
+    this->system_type = system_type;
     max_particles = 10000;
     vertex_shader = "shaders/colorparticle.vert"; 
     fragment_shader = "shaders/colorparticle.frag"; 
@@ -50,15 +50,21 @@ void Fountain::computeParticles()
     createNewParticles();
     for (int i = 0; i < max_particles; i++) {
         Particle *p = &particles[i];
-
         if (p->lifetime > 0.0f) {
             p->lifetime -= elapsed;
             if (p->lifetime > 0.0f) {
                 p->speed = p->speed + (gravity * elapsed);
                 p->pos = p->pos + (p->speed * elapsed / 10);
                 p->cameradistance = length((p->pos - camera_position));
-                //fprintf(stderr, "cameradistance %f\n", p->cameradistance);
-                setGPUBuffers(p, active_particles);
+                if (system_type == POINTS) {
+                    glBegin(POINTS);
+                    glColor3f(p->color.r, p->color.g, p->color.b);
+                    glVertex3dv(p->pos.unpack());
+                    glEnd();
+                }
+                else {
+                    setGPUBuffers(p, active_particles);
+                }
             } else {
                 p->cameradistance = -1.0f; /* particle has just died */
             }

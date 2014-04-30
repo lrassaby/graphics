@@ -5,7 +5,7 @@
 
 class Fountain : public ParticleSystem {
 	public:
-		Fountain();
+		Fountain(particle_type system_type);
 		~Fountain();
 		void computeParticles();
 

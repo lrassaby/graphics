@@ -35,20 +35,21 @@ enum SystemType {
 	FIREWORKS
 };
 
-Fountain fountain;
+Fountain pointfountain(POINTS);
+Fountain fountain(DDS);
 FireFountain firefountain;
 
-SystemType current_number;
+SystemType current_number = PARTICLE_FOUNTAIN;
 int display_axes = false;
 ParticleSystem *current_system = &fountain;
 
 void callbackSystemType (int id) {
 	switch(current_number) {
 		case PARTICLE_FOUNTAIN:
-			current_system = &fountain;	
+			current_system = &fountain;
 			break;
 		case FOUNTAIN:
-			current_system = &fountain;	
+			current_system = &pointfountain;	
 			break;
 		case FIRE_FOUNTAIN:
 			current_system = &firefountain;	
@@ -123,7 +124,7 @@ void myGlutDisplay(void)
 	glLoadIdentity();
 
 	//allow for user controlled rotation and scaling
-	glTranslatef( obj_pos[0], obj_pos[1]-0.25, -obj_pos[2]-2.0);
+	glTranslatef(obj_pos[0], obj_pos[1]-0.25, -obj_pos[2]-2.0);
 	glMultMatrixf(view_rotate);
 
 	// In this case, just the drawing of the axes.
