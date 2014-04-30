@@ -13,6 +13,7 @@
 #include <GL/glui.h>
 #include <math.h>
 #include "fountain.h"
+#include "firefountain.h"
 
 
 /* These are the live variables passed into GLUI */
@@ -35,6 +36,8 @@ enum SystemType {
 };
 
 Fountain fountain;
+FireFountain firefountain;
+
 SystemType current_number;
 int display_axes = false;
 ParticleSystem *current_system = &fountain;
@@ -48,7 +51,7 @@ void callbackSystemType (int id) {
 			current_system = &fountain;	
 			break;
 		case FIRE_FOUNTAIN:
-			current_system = &fountain;	
+			current_system = &firefountain;	
 			break;
 		case BUBBLES:
 			current_system = &fountain;	
@@ -60,6 +63,7 @@ void callbackSystemType (int id) {
 			current_system = &fountain;	
 			break;
 	}
+    current_system->initialize();
 }
 
 void myGlutIdle(void)
@@ -272,7 +276,7 @@ int main(int argc, char* argv[])
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 
-	fountain.initialize();
+	current_system->initialize();
     GLUI_Master.sync_live_all();
 
 	glutMainLoop();

@@ -305,11 +305,6 @@ int main( void )
 		glUniform1i(TextureID, 0);
 
 		// Same as the billboards tutorial
-        for (int i = 0; i < 3; i++) {
-            for(int j = 0; j < 3; j++) {
-                fprintf(stderr, "view matrix(%d, %d),%f\n", i, j, ViewMatrix[i][j]);
-            }
-        }
 		glUniform3f(CameraRight_worldspace_ID, ViewMatrix[0][0], ViewMatrix[1][0], ViewMatrix[2][0]);
 		glUniform3f(CameraUp_worldspace_ID   , ViewMatrix[0][1], ViewMatrix[1][1], ViewMatrix[2][1]);
 

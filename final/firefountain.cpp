@@ -1,15 +1,15 @@
-#include "fountain.h"
+#include "firefountain.h"
 #include <GL/glui.h>
 #include <stdlib.h>
 
 
-Fountain::Fountain()
+FireFountain::FireFountain()
 {
-    system_type = DDS;
+    system_type = IMAGE;
     max_particles = 10000;
-    vertex_shader = "shaders/colorparticle.vert"; 
-    fragment_shader = "shaders/colorparticle.frag"; 
-    texture_file = "shaders/particle.dds";
+    vertex_shader = "shaders/fireparticle.vert"; 
+    fragment_shader = "shaders/fireparticle.frag"; 
+    texture_file = "shaders/fire.ppm";
     spread = 1.0f; 
     particle_size = 10;
     radius = 1.5f;
@@ -17,9 +17,9 @@ Fountain::Fountain()
     gravity = Vector(0.0f, -9.81f, 0.0f);
 }
 
-Fountain::~Fountain(){}
+FireFountain::~FireFountain(){}
 
-void Fountain::createNewParticles()
+void FireFountain::createNewParticles()
 {
     int newparticles = elapsed * 1000;
     if (newparticles > max_particles / 2.0) { 
@@ -43,7 +43,7 @@ void Fountain::createNewParticles()
     }
 }
 
-void Fountain::computeParticles()
+void FireFountain::computeParticles()
 {
     active_particles = 0;
 

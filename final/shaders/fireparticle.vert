@@ -4,10 +4,12 @@
 attribute vec3 squareVertices;
 attribute vec4 xyzs; // Position of the center of the particule and size of the square
 attribute vec4 color; // Position of the center of the particule and size of the square
+attribute float age;
 
 // Output data ; will be interpolated for each fragment.
 varying vec2 UV;
 varying vec4 particlecolor;
+varying float frame;
 
 // Values that stay constant for the whole mesh.
 uniform vec3 CameraRight_worldspace;
@@ -30,4 +32,5 @@ void main()
 	// UV of the vertex. No special space for this one.
 	UV = squareVertices.xy + vec2(0.5, 0.5);
 	particlecolor = color;
+	frame = age;
 }
