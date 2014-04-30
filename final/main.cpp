@@ -303,7 +303,7 @@ int main(int argc, char* argv[])
 	/* We register the idle callback with GLUI, *not* with GLUT */
 	GLUI_Master.set_glutIdleFunc(myGlutIdle);
 
-	glClearColor(0.0f, 0.0f, 0.2f, 0.0f);
+	glClearColor(0.4f, 0.2f, 0.0f, 0.0f);
 
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);

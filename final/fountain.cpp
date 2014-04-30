@@ -2,7 +2,7 @@
 #include <GL/glui.h>
 #include <stdlib.h>
 
-
+#define LIFETIME 10.0f
 Fountain::Fountain(particle_type system_type)
 {
     this->system_type = system_type;
@@ -21,13 +21,13 @@ Fountain::~Fountain(){}
 
 void Fountain::createNewParticles()
 {
-    int newparticles = (elapsed * max_particles)/(5.0f);
+    int newparticles = (elapsed * max_particles)/(LIFETIME);
     if (newparticles > max_particles / 2.0) { 
         newparticles = max_particles / 2.0;
     }
     for (int i = 0; i < newparticles; i++) {
         int particle_index = findDeadParticle();
-        particles[particle_index].lifetime = 5.0f; // TODO: add to GUI
+        particles[particle_index].lifetime = LIFETIME; // TODO: add to GUI
         particles[particle_index].pos = Point(0, 0, 0); // TODO: add to GUI
 
         Vector rand_direction = getRandVector();
