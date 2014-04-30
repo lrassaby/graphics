@@ -72,12 +72,12 @@ void ParticleSystem::initialize()
         else if (system_type == IMAGE) {
             age_data = new GLubyte[max_particles];
             ageID = glGetAttribLocation(programID, "age");
-            ppm image(texture_file);
-            texture = image.createAsTexture();
             glGenBuffers(1, &particles_age_buffer);
             glBindBuffer(GL_ARRAY_BUFFER, particles_age_buffer);
             // Initialize with empty (NULL) buffer : it will be updated later, each frame.
             glBufferData(GL_ARRAY_BUFFER, max_particles * sizeof(GLubyte), NULL, GL_STREAM_DRAW);
+            ppm image(texture_file);
+            texture = image.createAsTexture();
         }
 
         glGenBuffers(1, &billboard_vertex_buffer);
@@ -135,8 +135,10 @@ void ParticleSystem::drawParticles()
         max_particles = m_max_particles;
         particles.resize(max_particles);
 
-        delete [] position_size_data;
-        delete [] color_data;
+        if (system_type != POINTS) {
+            delete [] position_size_data;
+            delete [] color_data;
+        }
         position_size_data = new GLfloat[max_particles * 4];
         color_data = new GLubyte[max_particles * 4];
 
@@ -336,6 +338,6 @@ void ParticleSystem::cleanup()
     glDeleteBuffers(1, &particles_position_buffer);
     glDeleteBuffers(1, &billboard_vertex_buffer);
     glDeleteBuffers(1, &particles_color_buffer);
-    glDeleteProgram(programID);
     glDeleteTextures(1, &texture_ID);
+    glDeleteProgram(programID);
 }

@@ -9,7 +9,7 @@ FireFountain::FireFountain()
     max_particles = 10000;
     vertex_shader = "shaders/fireparticle.vert"; 
     fragment_shader = "shaders/fireparticle.frag"; 
-    texture_file = "shaders/fire.ppm";
+    texture_file = "shaders/firesprite.ppm";
     spread = 1.0f; 
     particle_size = 10;
     radius = 1.5f;

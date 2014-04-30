@@ -12,5 +12,5 @@ void main(){
     vec2 xy;
     xy.x = frame * 16 + UV.x;
     xy.y = mod(frame, 8) * 128 + UV.y;
-    gl_FragColor = texture2D( myTextureSampler, xy ) * particlecolor;   
+    gl_FragColor = vec4(texture2D( myTextureSampler, xy ).rgb, 0.9);    
 }
