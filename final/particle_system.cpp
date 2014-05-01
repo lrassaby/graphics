@@ -5,7 +5,6 @@
 #include "ppm.h"
 
 #include "common/texture.hpp"
-#include "common/shader.hpp"
 
 ParticleSystem::ParticleSystem()
 {
@@ -25,6 +24,7 @@ ParticleSystem::~ParticleSystem()
     if (initialized && system_type != POINTS) {
         delete [] position_size_data;
         delete [] color_data;
+        delete [] age_data;
     }
 }
 
@@ -39,13 +39,13 @@ void ParticleSystem::initialize()
     particle_direction[Y] = main_direction[Y];
     particle_direction[Z] = main_direction[Z];
 
-    /* TODO: set up camera position...to set in particle system */
     particles.resize(max_particles);
     getCameraMatrices();
 
     if (system_type != POINTS) {
         position_size_data = new GLfloat[max_particles * 4];
         color_data = new GLubyte[max_particles * 4];
+        age_data = new GLubyte[max_particles];
 
         // Create and compile our GLSL program from the shaders
         programID = manager.loadShader(vertex_shader.c_str(), fragment_shader.c_str());
@@ -58,45 +58,46 @@ void ParticleSystem::initialize()
         // fragment shader
         texture_ID  = glGetUniformLocation(programID, "myTextureSampler");
 
-        /* get handle for common buffers */
+        /* get handle for buffers */
         squareVerticesID = glGetAttribLocation(programID, "squareVertices");
         xyzsID = glGetAttribLocation(programID, "xyzs");
         colorID = glGetAttribLocation(programID, "color");
+        ageID = glGetAttribLocation(programID, "age");
 
         /* load dds files */
         if (system_type == DDS){
             texture = loadDDS(texture_file.c_str());
         }
-
-        /* load ppm files and initialize extra age buffer */
+        /* load ppm files */
         else if (system_type == IMAGE) {
-            age_data = new GLubyte[max_particles];
-            ageID = glGetAttribLocation(programID, "age");
-            glGenBuffers(1, &particles_age_buffer);
-            glBindBuffer(GL_ARRAY_BUFFER, particles_age_buffer);
-            // Initialize with empty (NULL) buffer : it will be updated later, each frame.
-            glBufferData(GL_ARRAY_BUFFER, max_particles * sizeof(GLubyte), NULL, GL_STREAM_DRAW);
             ppm image(texture_file);
             texture = image.createAsTexture();
         }
 
+        /* VBO containing the particle billboard used to instance particles */
         glGenBuffers(1, &billboard_vertex_buffer);
         glBindBuffer(GL_ARRAY_BUFFER, billboard_vertex_buffer);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), 
+                     g_vertex_buffer_data, GL_STATIC_DRAW);
 
-        // The VBO containing the positions and sizes of the particles
+        /* VBO containing the positions and sizes of the particles */
         glGenBuffers(1, &particles_position_buffer);
         glBindBuffer(GL_ARRAY_BUFFER, particles_position_buffer);
-        // Initialize with empty (NULL) buffer : it will be updated later, each frame.
-        glBufferData(GL_ARRAY_BUFFER, max_particles * 4 * sizeof(GLfloat), NULL, GL_STREAM_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, max_particles * 4 * sizeof(GLfloat), NULL, 
+                     GL_STREAM_DRAW);
 
-        // The VBO containing the colors of the particles
+        /* The VBO containing particle colors */
         glGenBuffers(1, &particles_color_buffer);
         glBindBuffer(GL_ARRAY_BUFFER, particles_color_buffer);
-        // Initialize with empty (NULL) buffer : it will be updated later, each frame.
-        glBufferData(GL_ARRAY_BUFFER, max_particles * 4 * sizeof(GLubyte), NULL, GL_STREAM_DRAW);
-    }
+        glBufferData(GL_ARRAY_BUFFER, max_particles * 4 * sizeof(GLubyte), NULL, 
+                     GL_STREAM_DRAW);
 
+        /* The VBO containing particle age */
+        glGenBuffers(1, &particles_age_buffer);
+        glBindBuffer(GL_ARRAY_BUFFER, particles_age_buffer);
+        glBufferData(GL_ARRAY_BUFFER, max_particles * sizeof(GLubyte), NULL, 
+                     GL_STREAM_DRAW);
+    }
     last_time = glutGet(GLUT_ELAPSED_TIME);
 }
 
@@ -124,7 +125,9 @@ void ParticleSystem::setGPUBuffers(Particle *particle, int particle_index)
 void ParticleSystem::drawParticles() 
 {
     gravity = Vector(0.0, gravity_y, 0.0);
-    main_direction = Vector(particle_direction[X], particle_direction[Y], particle_direction[Z]);
+    main_direction = Vector(particle_direction[X], 
+                            particle_direction[Y], 
+                            particle_direction[Z]);
     int current_time = glutGet(GLUT_ELAPSED_TIME);
     elapsed = (current_time - last_time) * 0.001f;
     last_time = current_time;
@@ -138,16 +141,15 @@ void ParticleSystem::drawParticles()
         if (system_type != POINTS) {
             delete [] position_size_data;
             delete [] color_data;
-        }
-        position_size_data = new GLfloat[max_particles * 4];
-        color_data = new GLubyte[max_particles * 4];
-
-        if (system_type == IMAGE) {
             delete [] age_data;
+            position_size_data = new GLfloat[max_particles * 4];
+            color_data = new GLubyte[max_particles * 4];
             age_data = new GLubyte[max_particles];
         }
     }
+
     computeParticles();
+
     if (system_type != POINTS) {
         sortParticles();
         bindShaders();
@@ -172,14 +174,13 @@ void ParticleSystem::drawParticles()
             return i;
         }
     }
-    return 0; // All particles are taken, override the first one
+    return 0; /* all particles are taken, override the first one */
 }
 
-void ParticleSystem::sortParticles()
-{
-    std::sort(&particles[0], &particles[max_particles]);
-}
-
+/* 
+ * bindShaders - bind buffer data and pass shader variables.
+ * code based on example in http://www.opengl-tutorial.org/intermediate-tutorials/billboards-particles/particles-instancing/ 
+ */
 void ParticleSystem::bindShaders()
 {
     /* Update the buffers that OpenGL uses for rendering */
@@ -187,16 +188,15 @@ void ParticleSystem::bindShaders()
     glBufferData(GL_ARRAY_BUFFER, max_particles * 4 * sizeof(GLfloat), NULL, GL_STREAM_DRAW); // Buffer orphaning, a common way to improve streaming perf. See above link for details.
     glBufferSubData(GL_ARRAY_BUFFER, 0, active_particles * sizeof(GLfloat) * 4, position_size_data);
 
+    glBindBuffer(GL_ARRAY_BUFFER, particles_color_buffer);
+    glBufferData(GL_ARRAY_BUFFER, max_particles * 4 * sizeof(GLubyte), NULL, GL_STREAM_DRAW); // Buffer orphaning, a common way to improve streaming perf. See above link for details.
+    glBufferSubData(GL_ARRAY_BUFFER, 0, active_particles * sizeof(GLubyte) * 4, color_data);
+
     if (system_type == IMAGE) {
         glBindBuffer(GL_ARRAY_BUFFER, particles_age_buffer);
         glBufferData(GL_ARRAY_BUFFER, max_particles * sizeof(GLbyte), NULL, GL_STREAM_DRAW); // Buffer orphaning, a common way to improve streaming perf. See above link for details.
         glBufferSubData(GL_ARRAY_BUFFER, 0, active_particles * sizeof(GLbyte), age_data);
     }
-
-
-    glBindBuffer(GL_ARRAY_BUFFER, particles_color_buffer);
-    glBufferData(GL_ARRAY_BUFFER, max_particles * 4 * sizeof(GLubyte), NULL, GL_STREAM_DRAW); // Buffer orphaning, a common way to improve streaming perf. See above link for details.
-    glBufferSubData(GL_ARRAY_BUFFER, 0, active_particles * sizeof(GLubyte) * 4, color_data);
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -207,91 +207,54 @@ void ParticleSystem::bindShaders()
     // Bind our texture in Texture Unit 0
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
-    // Set our "myTextureSampler" sampler to user Texture Unit 0
     glUniform1i(texture_ID, 0);
 
-    // Same as the billboards tutorial
     glUniform3f(CameraRight_worldspace_ID, model_view[0][0], model_view[1][0], model_view[2][0]);
     glUniform3f(CameraUp_worldspace_ID, model_view[0][1], model_view[1][1], model_view[2][1]);
-
     glUniformMatrix4fv(ViewProjMatrixID, 1, GL_FALSE, &model_projection[0][0]);
 
-    // 1rst attribute buffer : vertices
+    /* billboard vertices */
     glEnableVertexAttribArray(squareVerticesID);
     glBindBuffer(GL_ARRAY_BUFFER, billboard_vertex_buffer);
-    glVertexAttribPointer(
-        squareVerticesID,                  // attribute. No particular reason for 0, but must match the layout in the shader.
-        3,                  // size
-        GL_FLOAT,           // type
-        GL_FALSE,           // normalized?
-        0,                  // stride
-        (void *)0           // array buffer offset
-    );
+    glVertexAttribPointer(squareVerticesID, 3, GL_FLOAT, GL_FALSE, 0, (void *)0);
 
+    /* bind particle attributes */
 
-    // 2nd attribute buffer : positions of particles' centers
+    /* positions of particles' centers */
     glEnableVertexAttribArray(xyzsID);
     glBindBuffer(GL_ARRAY_BUFFER, particles_position_buffer);
-    glVertexAttribPointer(
-        xyzsID,                                // attribute. No particular reason for 1, but must match the layout in the shader.
-        4,                                // size : x + y + z + size => 4
-        GL_FLOAT,                         // type
-        GL_FALSE,                         // normalized?
-        0,                                // stride
-        (void *)0                         // array buffer offset
-    );
+    glVertexAttribPointer(xyzsID, 4, GL_FLOAT, GL_FALSE, 0, (void *)0);
 
-    // 3rd attribute buffer : particles' colors
+    /* particles' colors */
     glEnableVertexAttribArray(colorID);
     glBindBuffer(GL_ARRAY_BUFFER, particles_color_buffer);
-    glVertexAttribPointer(
-        colorID,                          // attribute. No particular reason for 1, but must match the layout in the shader.
-        4,                                // size : r + g + b + a => 4
-        GL_UNSIGNED_BYTE,                 // type
-        GL_TRUE,                          // normalized?    *** YES, this means that the unsigned char[4] will be accessible with a vec4 (floats) in the shader ***
-        0,                                // stride
-        (void *)0                         // array buffer offset
-    );
+    glVertexAttribPointer(colorID, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, (void *)0);
 
-    if (system_type == IMAGE){
+    if (system_type == IMAGE) {
+        /* particles' age */
         glEnableVertexAttribArray(ageID);
         glBindBuffer(GL_ARRAY_BUFFER, particles_age_buffer);
-        glVertexAttribPointer(
-            ageID,                          // attribute. No particular reason for 1, but must match the layout in the shader.
-            1,                                // size : r + g + b + a => 4
-            GL_UNSIGNED_BYTE,                 // type
-            GL_TRUE,                          // normalized?    *** YES, this means that the unsigned char[4] will be accessible with a vec4 (floats) in the shader ***
-            0,                                // stride
-            (void *)0                         // array buffer offset
-        );
-        glVertexAttribDivisorARB(ageID, 1); // age : one per quad  -> 1       
+        glVertexAttribPointer(ageID, 1, GL_UNSIGNED_BYTE, GL_TRUE, 0, (void *)0);
+        glVertexAttribDivisorARB(ageID, 1); /* age: one per quad */
     }
     
-    // These functions are specific to glDrawArrays*Instanced*.
-    // The first parameter is the attribute buffer we're talking about.
-    // The second parameter is the "rate at which generic vertex attributes advance when rendering multiple instances"
-    // http://www.opengl.org/sdk/docs/man/xhtml/glVertexAttribDivisor.xml
     glVertexAttribDivisorARB(squareVerticesID, 0); // particles vertices : always reuse the same 4 vertices -> 0
-    glVertexAttribDivisorARB(xyzsID, 1); // positions : one per quad (its center)                 -> 1
-    glVertexAttribDivisorARB(colorID, 1); // color : one per quad                                  -> 1
+    glVertexAttribDivisorARB(xyzsID, 1); // positions: one per quad (its center)                 -> 1
+    glVertexAttribDivisorARB(colorID, 1); // color: one per quad                                  -> 1
                              
-
-    // This draws many times a small triangle_strip (which looks like a quad).
-    // This is equivalent to :
-    // for(i in ParticlesCount) : glDrawArrays(GL_TRIANGLE_STRIP, 0, 4),
-    // but faster.
+    /* draw each instance */
     glDrawArraysInstancedARB(GL_TRIANGLE_STRIP, 0, 4, active_particles);
-    //int x = glGetError(); 
-    //fprintf(stderr, "error code %s\n", gluErrorString(x));
 
     glDisableVertexAttribArray(squareVerticesID);
     glDisableVertexAttribArray(xyzsID);
     glDisableVertexAttribArray(colorID);
+
     if (system_type == IMAGE) {
         glDisableVertexAttribArray(ageID);
     }
 }
 
+/* getRandVector - returns a vector in a random direction */
 Vector ParticleSystem::getRandVector()
 {
     float phi = (rand() / (float)RAND_MAX) * 2 * M_PI;
@@ -338,6 +301,12 @@ void ParticleSystem::cleanup()
     glDeleteBuffers(1, &particles_position_buffer);
     glDeleteBuffers(1, &billboard_vertex_buffer);
     glDeleteBuffers(1, &particles_color_buffer);
+    glDeleteBuffers(1, &particles_age_buffer);
     glDeleteTextures(1, &texture_ID);
     glDeleteProgram(programID);
+}
+
+void ParticleSystem::sortParticles()
+{
+    std::sort(&particles[0], &particles[max_particles]);
 }

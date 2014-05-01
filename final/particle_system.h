@@ -20,16 +20,18 @@ static const GLfloat g_vertex_buffer_data[] ={
 class ParticleSystem
 {
 public:
-    float spread;             /* controls randomness spread */
-    int m_max_particles;        /* total number of particles */
-    int particle_size;
-    float gravity_y;
-    float particle_direction[3];
+    /* parameter available to be set by user */
+    float spread;                /* controls randomness spread */
+    int m_max_particles;         /* total number of particles */
+    int particle_size;           /* particle size */
+    float gravity_y;             /* magnitude of gravitational force */
+    float particle_direction[3]; /* fountain direction */
 
     ParticleSystem();
+    ~ParticleSystem();
+
     void initialize(); 
     void cleanup();
-    ~ParticleSystem();
     void drawParticles();
 
 protected:
@@ -38,9 +40,10 @@ protected:
     Vector main_direction;
     
     std::vector<Particle> particles;
+
     std::string vertex_shader;   /* shader set by child class */
     std::string fragment_shader; /* shader set by child class */
-    std::string texture_file;
+    std::string texture_file;    /* texture file set by child class */
     
     int max_particles;
     int active_particles;   /* subset of particles that are currently active */
@@ -52,23 +55,26 @@ protected:
     glm::mat4 model_view;
     glm::mat4 model_projection;
 
-    int findDeadParticle();
-    void sortParticles();
-    void bindShaders();
     void setGPUBuffers(Particle *particle, int particle_index);
+    int findDeadParticle();
     Vector getRandVector();
-    Color getRandColor();
     virtual void computeParticles(){};
 
 private:
     bool initialized;
+    int last_used_particle;
+
+    /* buffer handles */
     GLuint billboard_vertex_buffer;
     GLuint particles_position_buffer;
     GLuint particles_color_buffer;
     GLuint particles_age_buffer;
+
+    /* particle data passed to shaders */
     GLfloat *position_size_data;
     GLubyte *color_data;
     GLubyte *age_data;
+
     GLuint programID;
     GLuint CameraRight_worldspace_ID;
     GLuint CameraUp_worldspace_ID;
@@ -79,9 +85,10 @@ private:
     GLuint xyzsID;
     GLuint ageID;
     GLuint colorID;
-    int last_used_particle;
 
     void getCameraMatrices();
+    void sortParticles();
+    void bindShaders();
 };
 
 #endif /* particle_system.h */
