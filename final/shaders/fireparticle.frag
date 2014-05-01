@@ -2,7 +2,6 @@
 
 // Interpolated values from the vertex shaders
 varying vec2 UV;
-varying vec4 particlecolor;
 varying float frame;
 
 uniform sampler2D myTextureSampler;

@@ -21,24 +21,17 @@ FireFountain::~FireFountain(){}
 
 void FireFountain::createNewParticles()
 {
-    int newparticles = elapsed * 1000;
+    int newparticles = (elapsed * max_particles)/lifetime;
     if (newparticles > max_particles / 2.0) { 
         newparticles = max_particles / 2.0;
     }
     for (int i = 0; i < newparticles; i++) {
         int particle_index = findDeadParticle();
-        particles[particle_index].lifetime = lifetime;
-        particles[particle_index].pos = position;
-
         Vector rand_direction = getRandVector();
 
+        particles[particle_index].lifetime = lifetime;
+        particles[particle_index].pos = position;
         particles[particle_index].speed = main_direction + rand_direction * spread;
-        /* TODO: generate random colors */
-        particles[particle_index].color.r = (rand() / (float)RAND_MAX);
-        particles[particle_index].color.g = rand() / (float)RAND_MAX;
-        particles[particle_index].color.b = rand() / (float)RAND_MAX;
-        particles[particle_index].color.a = rand() / (float)RAND_MAX; 
-
         particles[particle_index].size = (rand() % particle_size) / 200.0f + 0.01f;
     }
 }

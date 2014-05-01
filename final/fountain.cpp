@@ -2,8 +2,6 @@
 #include <GL/glui.h>
 #include <stdlib.h>
 
-#define LIFETIME 10.0f
-
 Fountain::Fountain(particle_type system_type)
 {
     this->system_type = system_type;
@@ -22,7 +20,7 @@ Fountain::~Fountain(){}
 
 void Fountain::createNewParticles()
 {
-    int newparticles = (elapsed * max_particles)/(LIFETIME);
+    int newparticles = (elapsed * max_particles)/lifetime;
     if (newparticles > max_particles / 2.0) { 
         newparticles = max_particles / 2.0;
     }
