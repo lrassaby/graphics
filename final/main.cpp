@@ -14,6 +14,7 @@
 #include <math.h>
 #include "fountain.h"
 #include "firefountain.h"
+#include "remcofountain.h"
 
 
 /* These are the live variables passed into GLUI */
@@ -30,14 +31,27 @@ GLUI *glui;
 enum SystemType {
 	PARTICLE_FOUNTAIN,
 	FOUNTAIN,
+    REMCO_FOUNTAIN,
 	FIRE_FOUNTAIN
 };
+/* global variables */
+enum Human {
+    REMCO,
+    MIKE,
+    PAUL,
+    SOPHIE
+};
+
+
+
+SystemType current_number;
+Human current_human_number;
 
 Fountain pointfountain(POINTS);
 Fountain fountain(DDS);
+RemcoFountain remcofountain;
 FireFountain firefountain;
 
-SystemType current_number = PARTICLE_FOUNTAIN;
 ParticleSystem *current_system = &pointfountain;
 int display_axes = false;
 float dir_x, dir_y, dir_z;
@@ -83,6 +97,9 @@ void callbackSystemType (int id) {
 		case FOUNTAIN:
 			current_system = &fountain;	
 			break;
+        case REMCO_FOUNTAIN:
+            current_system = &remcofountain; 
+            break;
 		case FIRE_FOUNTAIN:
 			current_system = &firefountain;
             break;	
@@ -93,6 +110,30 @@ void callbackSystemType (int id) {
     current_system->initialize();
     getVariables();
     GLUI_Master.sync_live_all();
+}
+
+void callbackHuman (int id) {
+    switch(current_human_number) {
+        case REMCO:
+            remcofountain.setHuman("shaders/remcochang.ppm", "shaders/remcoparticle.frag");
+            break;
+        case MIKE:
+            remcofountain.setHuman("shaders/mikeshah.ppm", "shaders/remcoparticle.frag");
+            break;
+        case PAUL:
+            remcofountain.setHuman("shaders/paulnixon.ppm", "shaders/remcoparticle.frag");
+            break;
+        case SOPHIE:
+            remcofountain.setHuman("shaders/sophie.ppm", "shaders/remcoparticle.frag");
+            break;  
+        default:
+            break;
+    }
+    if (current_system == &remcofountain) {
+        current_system->initialize();
+        getVariables();
+        GLUI_Master.sync_live_all();
+    } 
 }
 
 void myGlutIdle(void)
@@ -228,6 +269,7 @@ int main(int argc, char* argv[])
 	GLUI_RadioGroup *selected = glui->add_radiogroup_to_panel(particle_systems, (int*)(&current_number), 3, callbackSystemType);
 	glui->add_radiobutton_to_group(selected, "Particle Fountain");
 	glui->add_radiobutton_to_group(selected, "Fountain");
+    glui->add_radiobutton_to_group(selected, "Remco Fountain");
 	glui->add_radiobutton_to_group(selected, "Fire Fountain");
     new GLUI_Column( glui, false );
 
@@ -263,10 +305,19 @@ int main(int argc, char* argv[])
     (new GLUI_Spinner(direction_panel, "Z", &dir_z))->set_float_limits(-50.0, 50.0);
     new GLUI_Column( glui, false );
 
-     GLUI_Panel *position_panel = glui->add_panel("Position");
+    GLUI_Panel *position_panel = glui->add_panel("Position");
     (new GLUI_Spinner(position_panel, "X", &pos_x))->set_float_limits(-5.0, 5.0);
     (new GLUI_Spinner(position_panel, "Y", &pos_y))->set_float_limits(-5.0, 5.0);
     (new GLUI_Spinner(position_panel, "Z", &pos_z))->set_float_limits(-5.0, 5.0);
+    new GLUI_Column( glui, false );
+
+    GLUI_Panel *staff_panel = glui->add_panel("Graphics Peeps");
+    GLUI_RadioGroup *person = glui->add_radiogroup_to_panel(staff_panel, (int*)(&current_human_number), 3, callbackHuman);
+    glui->add_radiobutton_to_group(person, "Remco");
+    glui->add_radiobutton_to_group(person, "Mike");
+    glui->add_radiobutton_to_group(person, "Paul");
+    glui->add_radiobutton_to_group(person, "Sophie");
+
     new GLUI_Column( glui, false );
      
 	glui->add_checkbox("Display Axes", &display_axes);
