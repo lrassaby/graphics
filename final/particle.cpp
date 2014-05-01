@@ -12,8 +12,7 @@ Particle::Particle()
 	pos = Point();
 }
 
-Particle::Particle(float lifetime, Color color, Point pos, Vector speed, 
-	bool active)
+Particle::Particle(float lifetime, Color color, Point pos, Vector speed)
 {
 	this->lifetime = lifetime;
 	this->color = color;
