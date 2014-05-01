@@ -68,6 +68,7 @@ void callbackSystemType (int id) {
     current_system->cleanup();
 	switch(current_number) {
 		case PARTICLE_FOUNTAIN:
+			glUseProgram(0);
 			current_system = &pointfountain;
 			break;
 		case FOUNTAIN:
@@ -123,6 +124,7 @@ void myGlutReshape(int x, int y)
 }
 
 void drawAxis(){                                                                    
+	glUseProgram(0);
     glBegin(GL_LINES);                                                              
         glColor3f(1.0, 0.0, 0.0);                                                   
         glVertex3f(0, 0, 0); glVertex3f(1.0, 0, 0);                                 
