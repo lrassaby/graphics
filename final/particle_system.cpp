@@ -1,9 +1,9 @@
 #include "particle_system.h"
-#include "shader.h"
 #include <stdio.h>
 #include <algorithm>
 #include "ppm.h"
 
+#include "common/shader.h"
 #include "common/texture.hpp"
 
 ParticleSystem::ParticleSystem()

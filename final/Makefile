@@ -10,7 +10,7 @@ MCFRAME = -framework OpenGL -framework GLUT -framework GLUI
 
 TARGET = run
 
-CFILES = main.cpp particle.cpp particle_system.cpp fountain.cpp firefountain.cpp shader.cpp common/texture.cpp ppm.cpp 
+CFILES = main.cpp particle.cpp particle_system.cpp fountain.cpp firefountain.cpp common/shader.cpp common/texture.cpp ppm.cpp 
 
 all: louis
 
