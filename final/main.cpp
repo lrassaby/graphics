@@ -109,7 +109,6 @@ void myGlutReshape(int x, int y)
 	//
 	glViewport(0, 0, x, y);
 	// Determine if we are modifying the camera(GL_PROJECITON) matrix(which is our viewing volume)
-	// Otherwise we could modify the object transormations in our world with GL_MODELVIEW
 	glMatrixMode(GL_PROJECTION);
 	// Reset the Projection matrix to an identity matrix
 	glLoadIdentity();
@@ -145,20 +144,12 @@ void myGlutDisplay(void)
 	glTranslatef(obj_pos[0], obj_pos[1]-0.25, -obj_pos[2]-2.0);
 	glMultMatrixf(view_rotate);
 
-	// In this case, just the drawing of the axes.
-
 	// draw the fountain
     pushVariables(); 
 	current_system->drawParticles();
 	if (display_axes) {
 		drawAxis();
 	}
-
-	// TODO: delete this when we no longer need it
-	// useful gl dbugging code 
-    //int x = glGetError(); 
-    //fprintf(stderr, "error code %s\n", gluErrorString(x));
-
 	glutSwapBuffers();
 }
 
@@ -188,7 +179,6 @@ int main(int argc, char* argv[])
 {
 	atexit(onExit);
 
-
 	/****************************************/
 	/*   Initialize GLUT and create window  */
 	/****************************************/
@@ -206,54 +196,19 @@ int main(int argc, char* argv[])
 
 	if (glewInit() != GLEW_OK) {
 		fprintf(stderr, "Failed to initialize GLEW\n");
-		return -1;
+		exit(-1);
 	}
 
 	/* Ensure that instancing is supported by GPU */	
     if (!GL_ARB_draw_instanced || !GL_ARB_instanced_arrays) {
         fprintf(stderr, "This GPU does not support instancing.");
-        getchar();
         onExit();
         exit(-1);
     }
 
 	/****************************************/
-	/*       Set up OpenGL lighting         */
-	/****************************************/
-
-	// Essentially set the background color of the 3D scene.
-	//glClearColor(0.1, 0.1, 0.1, 1.0);
-	/*
-	glShadeModel(GL_FLAT);
-
-	GLfloat light_pos0[] = { 0.0f, 0.0f, 1.0f, 0.0f };
-	GLfloat diffuse[] = { 0.5f, 0.5f, 0.5f, 0.0f };
-	GLfloat ambient[] = { 0.7f, 0.7f, 0.7f, 1.0f };
-
-	glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
-	glLightfv(GL_LIGHT0, GL_POSITION, light_pos0);
-
-	//glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-	glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
-	glEnable(GL_COLOR_MATERIAL);
-
-	glEnable(GL_LIGHTING);
-	glEnable(GL_LIGHT0);
-	*/
-
-	/****************************************/
-	/*          Enable z-buferring          */
-	/****************************************/
-
-
-	//glPolygonOffset(1, 1);
-
-	/****************************************/
 	/*         Here's the GLUI code         */
 	/****************************************/
-
-	//GLUI *glui = GLUI_Master.create_glui("GLUI");
 
 	glui = GLUI_Master.create_glui_subwindow( main_window, GLUI_SUBWINDOW_BOTTOM );
 
