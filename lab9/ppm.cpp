@@ -55,11 +55,13 @@ ppm::ppm(std::string _fileName){
               std::cout << "Magic Number: " << magicNumber << " ";
               std::cout << std::endl;
           }
+          /*
           else if(iteration==1){
             std::cout << line << std::endl;
           }
+          */
           // Read in dimensions
-          else if(iteration==2){
+          else if(iteration==1){
               width = atoi(delimeter_pointer);
               std::cout << "width: " << width << " ";
               delimeter_pointer = strtok(NULL," ");
@@ -78,7 +80,7 @@ ppm::ppm(std::string _fileName){
                         exit(1);
                     }
           }
-          else if(iteration==3){
+          else if(iteration==2){
             std::cout << "color range: 0-" << delimeter_pointer << std::endl;
           }
           else{
