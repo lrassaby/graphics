@@ -217,6 +217,9 @@ void reset() {
     pointfountain = Fountain(POINTS);
     fountain = Fountain(DDS);
     firefountain = FireFountain();
+    remcofountain = RemcoFountain();
+    callbackHuman(-1);
+
     memset(view_rotate, 0, sizeof(float) * 16);
     view_rotate[0] = 1;
     view_rotate[5] = 1;
