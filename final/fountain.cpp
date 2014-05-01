@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #define LIFETIME 10.0f
+
 Fountain::Fountain(particle_type system_type)
 {
     this->system_type = system_type;

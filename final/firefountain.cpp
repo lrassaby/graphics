@@ -6,7 +6,7 @@
 FireFountain::FireFountain()
 {
     system_type = IMAGE;
-    max_particles = 10000;
+    max_particles = 1000;
     vertex_shader = "shaders/fireparticle.vert"; 
     fragment_shader = "shaders/fireparticle.frag"; 
     texture_file = "shaders/firesprite.ppm";
@@ -57,7 +57,6 @@ void FireFountain::computeParticles()
                 p->speed = p->speed + (gravity * elapsed);
                 p->pos = p->pos + (p->speed * elapsed / 10);
                 p->cameradistance = length((p->pos - camera_position));
-                //fprintf(stderr, "cameradistance %f\n", p->cameradistance);
                 setGPUBuffers(p, active_particles);
             } else {
                 p->cameradistance = -1.0f; /* particle has just died */

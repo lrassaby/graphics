@@ -45,7 +45,7 @@ void ParticleSystem::initialize()
     if (system_type != POINTS) {
         position_size_data = new GLfloat[max_particles * 4];
         color_data = new GLubyte[max_particles * 4];
-        age_data = new GLubyte[max_particles];
+        age_data = new GLfloat[max_particles];
 
         // Create and compile our GLSL program from the shaders
         programID = manager.loadShader(vertex_shader.c_str(), fragment_shader.c_str());
@@ -95,7 +95,7 @@ void ParticleSystem::initialize()
         /* The VBO containing particle age */
         glGenBuffers(1, &particles_age_buffer);
         glBindBuffer(GL_ARRAY_BUFFER, particles_age_buffer);
-        glBufferData(GL_ARRAY_BUFFER, max_particles * sizeof(GLubyte), NULL, 
+        glBufferData(GL_ARRAY_BUFFER, max_particles * sizeof(GLfloat), NULL, 
                      GL_STREAM_DRAW);
     }
     last_time = glutGet(GLUT_ELAPSED_TIME);
@@ -115,10 +115,9 @@ void ParticleSystem::setGPUBuffers(Particle *particle, int particle_index)
     color_data[i + A] = particle->color.a * 255;
 
     if (system_type == IMAGE) {
-        int age_data_byte = 63 - (63.0f * particle->lifetime) / 5;
-        if (age_data_byte > 63) age_data_byte = 63;
-        if (age_data_byte < 0) age_data_byte = 0;
-        age_data[particle_index] = age_data_byte;
+        GLfloat age = 1.0 - (particle->lifetime / 5.0);
+        if (age > 1.0) age = 1.0;
+        age_data[particle_index] = age;
     }
 }
 
@@ -144,7 +143,7 @@ void ParticleSystem::drawParticles()
             delete [] age_data;
             position_size_data = new GLfloat[max_particles * 4];
             color_data = new GLubyte[max_particles * 4];
-            age_data = new GLubyte[max_particles];
+            age_data = new GLfloat[max_particles];
         }
     }
 
@@ -192,11 +191,9 @@ void ParticleSystem::bindShaders()
     glBufferData(GL_ARRAY_BUFFER, max_particles * 4 * sizeof(GLubyte), NULL, GL_STREAM_DRAW); // Buffer orphaning, a common way to improve streaming perf. See above link for details.
     glBufferSubData(GL_ARRAY_BUFFER, 0, active_particles * sizeof(GLubyte) * 4, color_data);
 
-    if (system_type == IMAGE) {
-        glBindBuffer(GL_ARRAY_BUFFER, particles_age_buffer);
-        glBufferData(GL_ARRAY_BUFFER, max_particles * sizeof(GLbyte), NULL, GL_STREAM_DRAW); // Buffer orphaning, a common way to improve streaming perf. See above link for details.
-        glBufferSubData(GL_ARRAY_BUFFER, 0, active_particles * sizeof(GLbyte), age_data);
-    }
+    glBindBuffer(GL_ARRAY_BUFFER, particles_age_buffer);
+    glBufferData(GL_ARRAY_BUFFER, max_particles * sizeof(GLfloat), NULL, GL_STREAM_DRAW); // Buffer orphaning, a common way to improve streaming perf. See above link for details.
+    glBufferSubData(GL_ARRAY_BUFFER, 0, active_particles * sizeof(GLfloat), age_data);
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -230,17 +227,15 @@ void ParticleSystem::bindShaders()
     glBindBuffer(GL_ARRAY_BUFFER, particles_color_buffer);
     glVertexAttribPointer(colorID, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, (void *)0);
 
-    if (system_type == IMAGE) {
-        /* particles' age */
-        glEnableVertexAttribArray(ageID);
-        glBindBuffer(GL_ARRAY_BUFFER, particles_age_buffer);
-        glVertexAttribPointer(ageID, 1, GL_UNSIGNED_BYTE, GL_TRUE, 0, (void *)0);
-        glVertexAttribDivisorARB(ageID, 1); /* age: one per quad */
-    }
-    
+    /* particles' age */
+    glEnableVertexAttribArray(ageID);
+    glBindBuffer(GL_ARRAY_BUFFER, particles_age_buffer);
+    glVertexAttribPointer(ageID, 1, GL_FLOAT, GL_TRUE, 0, (void *)0);
+
     glVertexAttribDivisorARB(squareVerticesID, 0); // particles vertices : always reuse the same 4 vertices -> 0
     glVertexAttribDivisorARB(xyzsID, 1); // positions: one per quad (its center)                 -> 1
     glVertexAttribDivisorARB(colorID, 1); // color: one per quad                                  -> 1
+    glVertexAttribDivisorARB(ageID, 1); /* age: one per quad */
                              
     /* draw each instance */
     glDrawArraysInstancedARB(GL_TRIANGLE_STRIP, 0, 4, active_particles);
@@ -248,10 +243,7 @@ void ParticleSystem::bindShaders()
     glDisableVertexAttribArray(squareVerticesID);
     glDisableVertexAttribArray(xyzsID);
     glDisableVertexAttribArray(colorID);
-
-    if (system_type == IMAGE) {
-        glDisableVertexAttribArray(ageID);
-    }
+    glDisableVertexAttribArray(ageID);
 }
 
 /* getRandVector - returns a vector in a random direction */

@@ -73,7 +73,7 @@ private:
     /* particle data passed to shaders */
     GLfloat *position_size_data;
     GLubyte *color_data;
-    GLubyte *age_data;
+    GLfloat *age_data;
 
     GLuint programID;
     GLuint CameraRight_worldspace_ID;
