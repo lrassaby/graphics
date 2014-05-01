@@ -28,8 +28,8 @@ void Fountain::createNewParticles()
     }
     for (int i = 0; i < newparticles; i++) {
         int particle_index = findDeadParticle();
-        particles[particle_index].lifetime = LIFETIME; // TODO: add to GUI
-        particles[particle_index].pos = Point(0, 0, 0); // TODO: add to GUI
+        particles[particle_index].lifetime = lifetime;
+        particles[particle_index].pos = position;
 
         Vector rand_direction = getRandVector();
 

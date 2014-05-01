@@ -10,10 +10,11 @@ ParticleSystem::ParticleSystem()
 {
     initialized = false;
     m_max_particles = 10000;
-    max_particles = m_max_particles;
     last_used_particle = 0;
+    lifetime = 5.0;
     spread = 1.0f; 
     radius = 1.5f;
+    position = Point(0.0, 0.0, 0.0);
     srand (time(NULL));
 }
 
@@ -35,6 +36,7 @@ void ParticleSystem::initialize()
 
     /* sync data */
     gravity_y = gravity[Y];
+    max_particles = m_max_particles;
     particle_direction[X] = main_direction[X];
     particle_direction[Y] = main_direction[Y];
     particle_direction[Z] = main_direction[Z];
@@ -115,7 +117,7 @@ void ParticleSystem::setGPUBuffers(Particle *particle, int particle_index)
     color_data[i + A] = particle->color.a * 255;
 
     if (system_type == IMAGE) {
-        GLfloat age = 1.0 - (particle->lifetime / 5.0);
+        GLfloat age = 1.0 - (particle->lifetime / lifetime);
         if (age > 1.0) age = 1.0;
         age_data[particle_index] = age;
     }
@@ -296,6 +298,7 @@ void ParticleSystem::cleanup()
     glDeleteBuffers(1, &particles_age_buffer);
     glDeleteTextures(1, &texture_ID);
     glDeleteProgram(programID);
+    glUseProgram(0);
 }
 
 void ParticleSystem::sortParticles()

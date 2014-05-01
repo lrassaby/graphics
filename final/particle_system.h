@@ -25,7 +25,9 @@ public:
     int m_max_particles;         /* total number of particles */
     int particle_size;           /* particle size */
     float gravity_y;             /* magnitude of gravitational force */
+    float lifetime;              /* particle's lifetime */
     float particle_direction[3]; /* fountain direction */
+    Point position;              /* world-space location of particle generation */
 
     ParticleSystem();
     ~ParticleSystem();

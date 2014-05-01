@@ -41,34 +41,43 @@ SystemType current_number = PARTICLE_FOUNTAIN;
 ParticleSystem *current_system = &pointfountain;
 int display_axes = false;
 float dir_x, dir_y, dir_z;
-float spread, gravity;
+float pos_x, pos_y, pos_z;
+float spread, gravity, lifetime;
 int num_particles, particle_size;
 
 void getVariables() {
     dir_x = current_system->particle_direction[X];
     dir_y = current_system->particle_direction[Y];
     dir_z = current_system->particle_direction[Z];
+    pos_x = current_system->position[X];
+    pos_y = current_system->position[Y];
+    pos_z = current_system->position[Z];
     spread = current_system->spread;
     num_particles = current_system->m_max_particles;
     particle_size = current_system->particle_size;
     gravity = current_system->gravity_y;
+    lifetime = current_system->lifetime;
 }
 
 void pushVariables() {
     current_system->particle_direction[X] = dir_x;
     current_system->particle_direction[Y] = dir_y;
     current_system->particle_direction[Z] = dir_z;
+    current_system->position[X] = pos_x;
+    current_system->position[Y] = pos_y;
+    current_system->position[Z] = pos_z;
     current_system->spread = spread;
     current_system->m_max_particles = num_particles;
     current_system->particle_size = particle_size;
     current_system->gravity_y = gravity;
+    current_system->lifetime = lifetime;
+
 }
 
 void callbackSystemType (int id) {
     current_system->cleanup();
 	switch(current_number) {
 		case PARTICLE_FOUNTAIN:
-			glUseProgram(0);
 			current_system = &pointfountain;
 			break;
 		case FOUNTAIN:
@@ -242,7 +251,9 @@ int main(int argc, char* argv[])
     (new GLUI_Spinner(particles_panel, "Num particles", &num_particles))->set_int_limits(10, 50000);
     (new GLUI_Spinner(particles_panel, "Spread", &spread))->set_float_limits(0.1, 10.0);
     (new GLUI_Spinner(particles_panel, "Particle Size", &particle_size))->set_int_limits(1, 100);
+    new GLUI_Column( particles_panel, false );
     (new GLUI_Spinner(particles_panel, "Gravity", &gravity))->set_float_limits(-50.0, 50.0);
+    (new GLUI_Spinner(particles_panel, "Lifetime", &lifetime))->set_float_limits(0.1, 15.0);
     new GLUI_Column( glui, false );
 
 
@@ -251,7 +262,13 @@ int main(int argc, char* argv[])
     (new GLUI_Spinner(direction_panel, "Y", &dir_y))->set_float_limits(-50.0, 50.0);
     (new GLUI_Spinner(direction_panel, "Z", &dir_z))->set_float_limits(-50.0, 50.0);
     new GLUI_Column( glui, false );
-    
+
+     GLUI_Panel *position_panel = glui->add_panel("Position");
+    (new GLUI_Spinner(position_panel, "X", &pos_x))->set_float_limits(-5.0, 5.0);
+    (new GLUI_Spinner(position_panel, "Y", &pos_y))->set_float_limits(-5.0, 5.0);
+    (new GLUI_Spinner(position_panel, "Z", &pos_z))->set_float_limits(-5.0, 5.0);
+    new GLUI_Column( glui, false );
+     
 	glui->add_checkbox("Display Axes", &display_axes);
 	glui->add_button("Reset", 0, (GLUI_Update_CB)reset);
 	glui->add_button("Quit", 0, (GLUI_Update_CB)exit);

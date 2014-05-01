@@ -11,7 +11,7 @@ FireFountain::FireFountain()
     fragment_shader = "shaders/fireparticle.frag"; 
     texture_file = "shaders/firesprite.ppm";
     spread = 1.0f; 
-    particle_size = 10;
+    particle_size = 10.0;
     radius = 1.5f;
     main_direction = Vector(0.0, 12.0, 0.0);
     gravity = Vector(0.0f, -9.81f, 0.0f);
@@ -27,8 +27,8 @@ void FireFountain::createNewParticles()
     }
     for (int i = 0; i < newparticles; i++) {
         int particle_index = findDeadParticle();
-        particles[particle_index].lifetime = 5.0f;
-        particles[particle_index].pos = Point(0, 0, 0);
+        particles[particle_index].lifetime = lifetime;
+        particles[particle_index].pos = position;
 
         Vector rand_direction = getRandVector();
 
